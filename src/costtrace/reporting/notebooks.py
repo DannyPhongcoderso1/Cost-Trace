@@ -405,8 +405,12 @@ NOTEBOOKS = {
         ),
         code(
             r"""
-            largest_nodes = max(nx.connected_components(G), key=len)
-            SG = G.subgraph(largest_nodes).copy()
+            largest_nodes = sorted(max(nx.connected_components(G), key=len))
+            SG = nx.Graph()
+            for node in largest_nodes:
+                SG.add_node(node, **G.nodes[node])
+            for u, v, attrs in sorted(G.subgraph(largest_nodes).edges(data=True)):
+                SG.add_edge(u, v, **attrs)
             deg = dict(SG.degree())
             wdeg = {
                 node: sum(float(attrs.get("total_duration_sec", 0.0)) for _, _, attrs in SG.edges(node, data=True))

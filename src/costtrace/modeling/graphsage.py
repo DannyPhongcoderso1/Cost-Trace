@@ -170,10 +170,10 @@ def main() -> None:
     logging.info("GraphSAGE proxy training start")
 
     Path("models").mkdir(exist_ok=True)
-    Path("results").mkdir(exist_ok=True)
+    Path("results/model").mkdir(parents=True, exist_ok=True)
 
     G = pickle.load(open("data/processed/graph.pkl", "rb"))
-    scores_df = pd.read_csv("results/node_scores.csv")
+    scores_df = pd.read_csv("results/metrics/node_scores.csv")
     nodes = sorted(G.nodes())
 
     adj = build_weighted_mean_adjacency(G, nodes)
@@ -269,7 +269,7 @@ def main() -> None:
             "sars_label": y.numpy().astype(int),
         }
     )
-    gnn_df.to_csv("results/gnn_risk_scores.csv", index=False)
+    gnn_df.to_csv("results/model/gnn_risk_scores.csv", index=False)
 
     metrics = {
         "model": "WeightedGraphSAGEClassifier",
@@ -283,7 +283,7 @@ def main() -> None:
         "validation": {k: round(v, 4) for k, v in val_metrics.items()},
         "test": {k: round(v, 4) for k, v in test_metrics.items()},
     }
-    with open("results/gnn_metrics.json", "w", encoding="utf-8") as f:
+    with open("results/model/gnn_metrics.json", "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
     with open("models/gnn_metadata.json", "w", encoding="utf-8") as f:
@@ -298,8 +298,8 @@ def main() -> None:
             indent=2,
         )
 
-    print("\nExported: results/gnn_risk_scores.csv")
-    print("Metrics : results/gnn_metrics.json")
+    print("\nExported: results/model/gnn_risk_scores.csv")
+    print("Metrics : results/model/gnn_metrics.json")
     print("Model   : models/gnn_best.pt")
 
     logging.info(

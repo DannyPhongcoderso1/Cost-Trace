@@ -75,10 +75,12 @@ def main() -> None:
     edges_df = pd.read_csv("data/processed/edgelist.csv")
     meta = pd.read_csv("data/processed/metadata_clean.csv")
 
-    with open("results/selected_nodes_by_strategy.json", encoding="utf-8") as f:
+    Path("results/intervention").mkdir(parents=True, exist_ok=True)
+
+    with open("results/intervention/selected_nodes_by_strategy.json", encoding="utf-8") as f:
         selected_map = json.load(f)
     random_replicates = {}
-    random_replicates_path = Path("results/random_replicates_by_budget.json")
+    random_replicates_path = Path("results/intervention/random_replicates_by_budget.json")
     if random_replicates_path.exists():
         with open(random_replicates_path, encoding="utf-8") as f:
             random_replicates = json.load(f)
@@ -147,7 +149,7 @@ def main() -> None:
             )
 
     cf_df = pd.DataFrame(rows)
-    cf_df.to_csv("results/counterfactual_results.csv", index=False)
+    cf_df.to_csv("results/intervention/counterfactual_results.csv", index=False)
 
     print("\n=== SUMMARY: Secondary Infections Prevented (%) ===")
     print(

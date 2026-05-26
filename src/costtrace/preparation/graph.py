@@ -1,11 +1,13 @@
 import json
 import pickle
+from pathlib import Path
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 
 
+Path("results/gephi").mkdir(parents=True, exist_ok=True)
 edges = pd.read_csv("data/processed/edges_clean.csv")
 meta = pd.read_csv("data/processed/metadata_clean.csv")
 
@@ -64,6 +66,7 @@ edgelist_df.to_csv("data/processed/edgelist.csv", index=False)
 
 # ── 5. Lưu graph object ───────────────────────────────────────────────────────
 pickle.dump(G, open("data/processed/graph.pkl", "wb"))
+nx.write_gexf(G, "results/gephi/contact_network.gexf")
 
 # ── 6. Print stats ────────────────────────────────────────────────────────────
 components = list(nx.connected_components(G))

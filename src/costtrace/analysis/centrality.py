@@ -65,7 +65,8 @@ for sg in comps:
         )
 
 centrality_df = pd.DataFrame(all_centrality).sort_values(["hhid", "node_id"])
-centrality_df.to_csv("results/centrality_scores.csv", index=False)
+Path("results/metrics").mkdir(parents=True, exist_ok=True)
+centrality_df.to_csv("results/metrics/centrality_scores.csv", index=False)
 
 # Print top super-spreaders (SARS+ nodes with highest degree)
 print("\n=== TOP 10 SUPER-SPREADERS (SARS+ | Highest Degree Centrality) ===")

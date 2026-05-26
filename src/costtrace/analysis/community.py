@@ -39,7 +39,7 @@ for cid, comm in enumerate(communities):
         node_community[node] = cid
 
 # Compare with household label
-centrality_df = pd.read_csv("results/centrality_scores.csv")
+centrality_df = pd.read_csv("results/metrics/centrality_scores.csv")
 centrality_df["louvain_community_id"] = centrality_df["node_id"].map(node_community)
 centrality_df = centrality_df.sort_values(["hhid", "node_id"]).reset_index(drop=True)
 
@@ -60,16 +60,17 @@ print(
 print("  (100% = Louvain perfectly recovers HH structure)")
 
 # Export
-centrality_df.to_csv("results/centrality_scores.csv", index=False)
+Path("results/metrics").mkdir(parents=True, exist_ok=True)
+centrality_df.to_csv("results/metrics/centrality_scores.csv", index=False)
 
 community_df = pd.DataFrame(list(node_community.items()), columns=["node_id", "community_id"])
 community_df["community_size"] = community_df["community_id"].map(
     community_df["community_id"].value_counts()
 )
 community_df = community_df.sort_values(["community_id", "node_id"]).reset_index(drop=True)
-community_df.to_csv("results/community_assignments.csv", index=False)
+community_df.to_csv("results/metrics/community_assignments.csv", index=False)
 
-with open("results/community_metrics.json", "w") as f:
+with open("results/metrics/community_metrics.json", "w") as f:
     json.dump(
         {
             "method": "louvain",

@@ -23,8 +23,13 @@ CostTrace/
     modeling/            GraphSAGE proxy cho dự báo nguy cơ node
     intervention/        phân bổ ngân sách, counterfactual, SIR, tổng hợp kết quả
     reporting/           sinh notebook và figure báo cáo
-  notebooks/             assessment, topology, intervention
-  results/               bảng kết quả, metric và hình báo cáo
+  notebooks/             topology, intervention
+  results/
+    metrics/             topology, centrality, community và node-risk tables
+    model/               GraphSAGE metrics và risk scores
+    intervention/        top-k, counterfactual, SIR và bảng so sánh cuối
+    figures/             hình trực quan hóa theo từng nhóm notebook
+    gephi/               đồ thị GEXF mở được bằng Gephi
   models/                trọng số và metadata mô hình
   main.py                entrypoint chạy pipeline
 ```
@@ -55,11 +60,11 @@ python main.py --phase all
 
 ## Artifact chính
 
-- `results/final_comparison.csv`: bảng so sánh chiến lược theo ngân sách.
-- `results/final_strategy_summary.json`: chiến lược tốt nhất ở từng mức ngân sách.
-- `results/gnn_metrics.json`: chỉ số train/validation/test của GraphSAGE proxy.
-- `notebooks/assessment.ipynb`: đánh giá theo rubric và checklist cuối kỳ.
-- `notebooks/topology.ipynb`: cấu trúc mạng, component, centrality và community.
+- `results/intervention/final_comparison.csv`: bảng so sánh chiến lược theo ngân sách.
+- `results/intervention/final_strategy_summary.json`: chiến lược tốt nhất ở từng mức ngân sách.
+- `results/model/gnn_metrics.json`: chỉ số train/validation/test của GraphSAGE proxy.
+- `results/gephi/contact_network.gexf`: đồ thị xuất cho Gephi.
+- `notebooks/topology.ipynb`: cấu trúc mạng, component, centrality và community; có hình NetworkX.
 - `notebooks/intervention.ipynb`: so sánh chiến lược, mô hình và khuyến nghị ngân sách.
 
 ## Tài liệu tham khảo

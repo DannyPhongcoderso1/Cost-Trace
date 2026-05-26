@@ -14,7 +14,7 @@ logging.basicConfig(
 
 logging.info("Risk score synthesis start")
 
-centrality_df = pd.read_csv("results/centrality_scores.csv").sort_values("node_id")
+centrality_df = pd.read_csv("results/metrics/centrality_scores.csv").sort_values("node_id")
 
 # Encode categorical features for future GNN use
 centrality_df["sex_enc"] = (centrality_df["sex"] == "Male").astype(int)
@@ -55,8 +55,9 @@ centrality_df = centrality_df.sort_values(
 )
 centrality_df["rank_by_composite"] = range(1, len(centrality_df) + 1)
 
-centrality_df.to_csv("results/node_scores.csv", index=False)
-print("OK: Exported results/node_scores.csv")
+Path("results/metrics").mkdir(parents=True, exist_ok=True)
+centrality_df.to_csv("results/metrics/node_scores.csv", index=False)
+print("OK: Exported results/metrics/node_scores.csv")
 print("\nTop 15 highest-risk nodes:")
 top_cols = [
     "node_id",

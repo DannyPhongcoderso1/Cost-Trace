@@ -21,11 +21,6 @@ NOTEBOOK_DIR.mkdir(parents=True, exist_ok=True)
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 
 FIGURE_SLUGS = {
-    "assessment": {
-        4: "rubric",
-        6: "dashboard",
-        8: "checklist",
-    },
     "topology": {
         4: "components",
         6: "network",
@@ -61,250 +56,6 @@ def code(source: str) -> dict:
 
 
 NOTEBOOKS = {
-    "assessment.ipynb": [
-        md(
-            """
-            # CostTrace - Tổng quan theo tiêu chí cuối kỳ
-
-            Notebook này kiểm tra mức sẵn sàng của CostTrace theo rubric 100 điểm:
-            tính thực tiễn, phương pháp, phân tích kết quả, trực quan hóa, báo cáo và sáng tạo.
-            Phần diễn giải dùng ngôn ngữ trung tính để phù hợp khi nộp/báo cáo.
-            """
-        ),
-        code(
-            r"""
-            from pathlib import Path
-            import json
-            import pickle
-
-            import matplotlib.pyplot as plt
-            import numpy as np
-            import pandas as pd
-
-            ROOT = Path.cwd()
-            if ROOT.name == "notebooks":
-                ROOT = ROOT.parent
-            DATA = ROOT / "data"
-            RESULTS = ROOT / "results"
-            FIG = RESULTS / "figures"
-            FIG.mkdir(parents=True, exist_ok=True)
-
-            try:
-                plt.style.use("seaborn-v0_8-whitegrid")
-            except OSError:
-                pass
-
-            expected = [
-                ("Sự kiện tương tác gốc", DATA / "raw" / "sashts_contact_network.csv"),
-                ("Metadata cá thể", DATA / "raw" / "sashts_metadata.csv"),
-                ("Đồ thị xử lý", DATA / "processed" / "graph.pkl"),
-                ("Bảng điểm node", RESULTS / "node_scores.csv"),
-                ("Chỉ số mô hình", RESULTS / "gnn_metrics.json"),
-                ("Bảng ngân sách", RESULTS / "topk_budget_results.csv"),
-                ("Bảng so sánh cuối", RESULTS / "final_comparison.csv"),
-                ("Tóm tắt chiến lược", RESULTS / "final_strategy_summary.json"),
-            ]
-
-            rows = []
-            for label, path in expected:
-                rows.append(
-                    {
-                        "hạng_mục": label,
-                        "có_file": path.exists(),
-                        "kích_thước_kb": round(path.stat().st_size / 1024, 1) if path.exists() else 0,
-                    }
-                )
-            status_df = pd.DataFrame(rows)
-            print(status_df.to_string(index=False))
-            completeness = status_df["có_file"].mean() * 100
-            print(f"\nINSIGHT: Artifact pipeline đạt {completeness:.0f}% ở các hạng mục cốt lõi; điểm cần bổ sung chính là lớp notebook diễn giải và trực quan hóa.")
-            """
-        ),
-        md(
-            """
-            **Insight sau cell 1:** CostTrace đã có dữ liệu, kết quả trung gian và bảng tổng hợp.
-            Vì vậy phần notebook mới không thay thế pipeline, mà biến kết quả hiện có thành câu chuyện có thể chấm theo rubric.
-            """
-        ),
-        code(
-            r"""
-            rubric = pd.DataFrame(
-                [
-                    {
-                        "tiêu_chí": "Tính thực tiễn",
-                        "tối_đa": 20,
-                        "trước_bổ_sung": 19,
-                        "sau_bổ_sung": 19,
-                        "minh_chứng": "Dữ liệu thực, bài toán rõ, có khả năng mở rộng.",
-                    },
-                    {
-                        "tiêu_chí": "Phương pháp tiếp cận",
-                        "tối_đa": 20,
-                        "trước_bổ_sung": 18,
-                        "sau_bổ_sung": 19,
-                        "minh_chứng": "Centrality, Louvain, GNN, chọn top-k theo ngân sách.",
-                    },
-                    {
-                        "tiêu_chí": "Phân tích & đánh giá",
-                        "tối_đa": 20,
-                        "trước_bổ_sung": 17,
-                        "sau_bổ_sung": 19,
-                        "minh_chứng": "Có AUC/F1/coverage/baseline; notebook bổ sung diễn giải.",
-                    },
-                    {
-                        "tiêu_chí": "Trực quan hóa",
-                        "tối_đa": 15,
-                        "trước_bổ_sung": 8,
-                        "sau_bổ_sung": 14,
-                        "minh_chứng": "Trước đó thiếu notebook; hiện có dashboard và đồ thị mạng.",
-                    },
-                    {
-                        "tiêu_chí": "Báo cáo & trình bày",
-                        "tối_đa": 15,
-                        "trước_bổ_sung": 9,
-                        "sau_bổ_sung": 13,
-                        "minh_chứng": "README có khung; notebook audit hỗ trợ phần báo cáo.",
-                    },
-                    {
-                        "tiêu_chí": "Sáng tạo",
-                        "tối_đa": 10,
-                        "trước_bổ_sung": 9,
-                        "sau_bổ_sung": 9,
-                        "minh_chứng": "Kết hợp điểm mạng, GNN và ràng buộc tài nguyên.",
-                    },
-                ]
-            )
-
-            total_before = int(rubric["trước_bổ_sung"].sum())
-            total_after = int(rubric["sau_bổ_sung"].sum())
-            print(rubric.to_string(index=False))
-            print(f"\nTổng điểm ước lượng trước bổ sung : {total_before}/100")
-            print(f"Tổng điểm ước lượng sau bổ sung  : {total_after}/100")
-
-            x = np.arange(len(rubric))
-            width = 0.36
-            fig, ax = plt.subplots(figsize=(11, 5.6))
-            ax.bar(x - width / 2, rubric["trước_bổ_sung"], width, label="Trước bổ sung", color="#6c757d")
-            ax.bar(x + width / 2, rubric["sau_bổ_sung"], width, label="Sau bổ sung", color="#2a9d8f")
-            ax.plot(x, rubric["tối_đa"], color="#e76f51", marker="o", linewidth=2, label="Điểm tối đa")
-            ax.set_title("Đánh giá CostTrace theo rubric cuối kỳ")
-            ax.set_ylabel("Điểm")
-            ax.set_xticks(x)
-            ax.set_xticklabels(rubric["tiêu_chí"], rotation=25, ha="right")
-            ax.set_ylim(0, 22)
-            ax.legend(loc="upper left", ncols=3)
-            for idx, value in enumerate(rubric["sau_bổ_sung"]):
-                ax.text(idx + width / 2, value + 0.4, str(value), ha="center", fontsize=9)
-            plt.tight_layout()
-
-            strongest = rubric.loc[rubric["sau_bổ_sung"].idxmax(), "tiêu_chí"]
-            weakest = rubric.assign(gap=rubric["tối_đa"] - rubric["sau_bổ_sung"]).sort_values("gap", ascending=False).iloc[0]
-            print(f"\nINSIGHT: Mạnh nhất là {strongest}; phần còn thiếu lớn nhất là {weakest['tiêu_chí']} vì vẫn cần slide/bản thuyết trình riêng để chạm điểm tuyệt đối.")
-            """
-        ),
-        md(
-            """
-            **Insight sau cell 2:** Trước khi thêm notebook, dự án mạnh ở dữ liệu và phương pháp nhưng yếu ở phần kể chuyện bằng hình.
-            Sau bổ sung, điểm trực quan hóa và trình bày tăng rõ, còn slide vẫn là việc nên làm trước ngày nộp.
-            """
-        ),
-        code(
-            r"""
-            def read_json(path):
-                with open(path, encoding="utf-8") as f:
-                    return json.load(f)
-
-            basic = read_json(RESULTS / "basic_metrics.json")
-            community = read_json(RESULTS / "community_metrics.json")
-            model_metrics = read_json(RESULTS / "gnn_metrics.json")
-            strategy_summary = read_json(RESULTS / "final_strategy_summary.json")
-
-            dashboard = pd.DataFrame(
-                [
-                    ("Số node", basic["n_nodes_total"]),
-                    ("Số edge", basic["n_edges_total"]),
-                    ("Số cụm hộ", basic["n_households"]),
-                    ("Clustering TB", round(basic["avg_clustering_per_hh"], 3)),
-                    ("Modularity", round(community["modularity"], 3)),
-                    ("Khớp cộng đồng-hộ (%)", community["hh_agreement_pct"]),
-                    ("AUC test", model_metrics["test"]["auc"]),
-                    ("F1 test", model_metrics["test"]["f1"]),
-                ],
-                columns=["chỉ_số", "giá_trị"],
-            )
-            print(dashboard.to_string(index=False))
-
-            best_rows = []
-            coverage_key = "trans" + "mission_coverage"
-            for budget, info in strategy_summary["best_by_budget"].items():
-                best_rows.append(
-                    {
-                        "ngân_sách_%": int(budget),
-                        "chiến_lược_tốt": info["strategy"],
-                        "gain_%": info["prevention_rate_pct"],
-                        "coverage_%": info[coverage_key],
-                        "sim_reduction_%": info["sir_reduction_pct"],
-                    }
-                )
-            best_df = pd.DataFrame(best_rows)
-            print("\nChiến lược tốt nhất theo từng mức ngân sách:")
-            print(best_df.to_string(index=False))
-
-            fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
-            axes[0].barh(dashboard["chỉ_số"], dashboard["giá_trị"], color="#457b9d")
-            axes[0].set_title("Snapshot chỉ số chính")
-            axes[0].set_xlabel("Giá trị")
-            axes[1].bar(best_df["ngân_sách_%"].astype(str), best_df["gain_%"], color=["#e9c46a", "#2a9d8f", "#264653"])
-            axes[1].set_title("Gain tốt nhất theo ngân sách")
-            axes[1].set_xlabel("Ngân sách (%)")
-            axes[1].set_ylabel("Gain (%)")
-            for idx, row in best_df.iterrows():
-                axes[1].text(idx, row["gain_%"] + 1, row["chiến_lược_tốt"], ha="center", fontsize=9)
-            plt.tight_layout()
-
-            print("\nINSIGHT: Cấu trúc mạng khớp rất mạnh với nhóm hộ; mô hình đạt AUC test khoảng 0.77, đủ dùng để so sánh với baseline nhưng vẫn nên trình bày như mô hình thực nghiệm nhỏ.")
-            """
-        ),
-        md(
-            """
-            **Insight sau cell 3:** Kết quả hiện tại đã có đủ bằng chứng định lượng:
-            chỉ số mạng, phân cụm, mô hình, và so sánh chiến lược theo ngân sách. Khi báo cáo, nên nhấn mạnh rằng đây là mô hình thử nghiệm có kiểm chứng bằng nhiều baseline.
-            """
-        ),
-        code(
-            r"""
-            action_map = pd.DataFrame(
-                [
-                    ("Notebook audit rubric", "Hoàn tất", "Gắn tiêu chí với minh chứng cụ thể."),
-                    ("Notebook cấu trúc mạng", "Hoàn tất", "Bổ sung đồ thị, phân bố component, centrality."),
-                    ("Notebook chiến lược ngân sách", "Hoàn tất", "So sánh baseline, GNN và mức ngân sách."),
-                    ("Slide thuyết trình", "Cần làm thêm", "Nên tóm tắt 6 tiêu chí trong 8-12 slide."),
-                    ("Ablation sâu hơn", "Tùy chọn", "Có thể thử thêm trọng số hoặc seed khác."),
-                ],
-                columns=["hạng_mục", "trạng_thái", "ghi_chú"],
-            )
-            print(action_map.to_string(index=False))
-
-            status_counts = action_map["trạng_thái"].value_counts()
-            fig, ax = plt.subplots(figsize=(7, 4))
-            colors = {"Hoàn tất": "#2a9d8f", "Cần làm thêm": "#e76f51", "Tùy chọn": "#e9c46a"}
-            ax.bar(status_counts.index, status_counts.values, color=[colors.get(v, "#6c757d") for v in status_counts.index])
-            ax.set_title("Mức hoàn thiện theo checklist cuối kỳ")
-            ax.set_ylabel("Số hạng mục")
-            for idx, value in enumerate(status_counts.values):
-                ax.text(idx, value + 0.05, str(value), ha="center")
-            plt.tight_layout()
-
-            print("\nINSIGHT: Sau khi thêm notebook, phần còn lại chủ yếu là đóng gói trình bày; lõi phân tích đã có đủ dữ liệu, phương pháp, so sánh và hình.")
-            """
-        ),
-        md(
-            """
-            **Insight sau cell 4:** Nếu còn thời gian, ưu tiên slide hơn là viết thêm thuật toán.
-            Rubric đang cần phần trình bày rõ ràng để biến kết quả kỹ thuật thành câu trả lời dễ chấm.
-            """
-        ),
-    ],
     "topology.ipynb": [
         md(
             """
@@ -342,7 +93,7 @@ NOTEBOOKS = {
                 G = pickle.load(f)
             meta = pd.read_csv(DATA / "processed" / "metadata_clean.csv")
             edges = pd.read_csv(DATA / "processed" / "edgelist.csv")
-            scores = pd.read_csv(RESULTS / "node_scores.csv")
+            scores = pd.read_csv(RESULTS / "metrics" / "node_scores.csv")
 
             label_col = "s" + "ars"
             positive_rate = (meta[label_col] == "Positive").mean() * 100
@@ -361,7 +112,7 @@ NOTEBOOKS = {
             r"""
             comps = [G.subgraph(c).copy() for c in nx.connected_components(G)]
             comp_sizes = pd.Series([sg.number_of_nodes() for sg in comps], name="component_size")
-            hh_metrics = pd.read_csv(RESULTS / "household_metrics.csv")
+            hh_metrics = pd.read_csv(RESULTS / "metrics" / "household_metrics.csv")
 
             summary = pd.DataFrame(
                 {
@@ -483,7 +234,7 @@ NOTEBOOKS = {
         ),
         code(
             r"""
-            with open(RESULTS / "community_metrics.json", encoding="utf-8") as f:
+            with open(RESULTS / "metrics" / "community_metrics.json", encoding="utf-8") as f:
                 community = json.load(f)
             sizes = pd.Series(community["community_sizes"], name="community_size")
 
@@ -548,7 +299,7 @@ NOTEBOOKS = {
             except OSError:
                 pass
 
-            final = pd.read_csv(RESULTS / "final_comparison.csv")
+            final = pd.read_csv(RESULTS / "intervention" / "final_comparison.csv")
             coverage_col = "trans" + "mission_coverage"
             compact = final.rename(
                 columns={
@@ -628,7 +379,7 @@ NOTEBOOKS = {
         ),
         code(
             r"""
-            with open(RESULTS / "gnn_metrics.json", encoding="utf-8") as f:
+            with open(RESULTS / "model" / "gnn_metrics.json", encoding="utf-8") as f:
                 model_metrics = json.load(f)
             metric_df = pd.DataFrame(
                 {split: model_metrics[split] for split in ["train", "validation", "test"]}
@@ -662,8 +413,8 @@ NOTEBOOKS = {
         ),
         code(
             r"""
-            scores = pd.read_csv(RESULTS / "node_scores.csv")
-            gnn = pd.read_csv(RESULTS / "gnn_risk_scores.csv")
+            scores = pd.read_csv(RESULTS / "metrics" / "node_scores.csv")
+            gnn = pd.read_csv(RESULTS / "model" / "gnn_risk_scores.csv")
             gnn_col = "gnn_" + "inf" + "ection_prob"
             merged = scores.merge(gnn[["node_id", gnn_col]], on="node_id", how="inner")
             overlap_rows = []
@@ -707,7 +458,7 @@ NOTEBOOKS = {
         ),
         code(
             r"""
-            with open(RESULTS / "final_strategy_summary.json", encoding="utf-8") as f:
+            with open(RESULTS / "intervention" / "final_strategy_summary.json", encoding="utf-8") as f:
                 summary = json.load(f)
             rec_rows = []
             coverage_key = "trans" + "mission_coverage"
@@ -808,8 +559,10 @@ def execute_code_cell(source: str, namespace: dict, notebook_stem: str, cell_ind
         fig = plt.figure(fig_num)
         figure_slug = FIGURE_SLUGS.get(notebook_stem, {}).get(cell_index, "figure")
         suffix_index = min(fig_position - 1, len(EXTRA_FIGURE_SUFFIXES) - 1)
-        image_name = f"{notebook_stem}_{figure_slug}{EXTRA_FIGURE_SUFFIXES[suffix_index]}.png"
-        image_path = FIG_DIR / image_name
+        figure_dir = FIG_DIR / notebook_stem
+        figure_dir.mkdir(parents=True, exist_ok=True)
+        image_name = f"{figure_slug}{EXTRA_FIGURE_SUFFIXES[suffix_index]}.png"
+        image_path = figure_dir / image_name
         fig.savefig(image_path, dpi=160)
 
         encoded = base64.b64encode(image_path.read_bytes()).decode("ascii")

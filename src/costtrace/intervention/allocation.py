@@ -100,8 +100,10 @@ def main() -> None:
     logging.info("Budget allocation start")
 
     G = pickle.load(open("data/processed/graph.pkl", "rb"))
-    scores_df = pd.read_csv("results/node_scores.csv")
-    gnn_df = pd.read_csv("results/gnn_risk_scores.csv")
+    Path("results/intervention").mkdir(parents=True, exist_ok=True)
+
+    scores_df = pd.read_csv("results/metrics/node_scores.csv")
+    gnn_df = pd.read_csv("results/model/gnn_risk_scores.csv")
     edges_df = pd.read_csv("data/processed/edgelist.csv")
 
     all_scores = scores_df.merge(
@@ -192,12 +194,12 @@ def main() -> None:
             )
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv("results/topk_budget_results.csv", index=False)
+    results_df.to_csv("results/intervention/topk_budget_results.csv", index=False)
 
-    with open("results/selected_nodes_by_strategy.json", "w", encoding="utf-8") as f:
+    with open("results/intervention/selected_nodes_by_strategy.json", "w", encoding="utf-8") as f:
         json.dump(selected_map, f, indent=2)
 
-    with open("results/random_replicates_by_budget.json", "w", encoding="utf-8") as f:
+    with open("results/intervention/random_replicates_by_budget.json", "w", encoding="utf-8") as f:
         json.dump(random_replicates, f, indent=2)
 
     k1 = results_df[results_df["budget_k_pct"] == 1].sort_values(
@@ -206,7 +208,7 @@ def main() -> None:
     best_k1 = k1.iloc[0]
 
     try:
-        with open("results/gnn_metrics.json", encoding="utf-8") as f:
+        with open("results/model/gnn_metrics.json", encoding="utf-8") as f:
             gnn_metrics = json.load(f)
         gnn_auc = gnn_metrics["test"]["auc"]
     except (FileNotFoundError, KeyError):
@@ -224,7 +226,7 @@ def main() -> None:
         },
         "gnn_test_auc": gnn_auc,
     }
-    with open("results/topk_budget_summary.json", "w", encoding="utf-8") as f:
+    with open("results/intervention/topk_budget_summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
     print("\n=== SUMMARY: Transmission Coverage by budget ===")

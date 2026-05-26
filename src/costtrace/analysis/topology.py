@@ -39,7 +39,8 @@ for i, sg in enumerate(comps):
     )
 
 comp_df = pd.DataFrame(comp_stats)
-comp_df.to_csv("results/household_metrics.csv", index=False)
+Path("results/metrics").mkdir(parents=True, exist_ok=True)
+comp_df.to_csv("results/metrics/household_metrics.csv", index=False)
 
 # Aggregate metrics
 metrics = {
@@ -56,7 +57,7 @@ metrics = {
     "note": "Metrics computed per household component (88 separate HH subgraphs)",
 }
 
-with open("results/basic_metrics.json", "w") as f:
+with open("results/metrics/basic_metrics.json", "w") as f:
     json.dump(metrics, f, indent=2)
 
 print("=== BASIC NETWORK METRICS ===")

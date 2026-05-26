@@ -48,7 +48,7 @@ def sir_on_household(
     if index_node not in sg:
         return 0
 
-    state = {node: "S" for node in sg.nodes()}
+    state = {node: "S" for node in sorted(sg.nodes())}
     state[index_node] = "I"
     total_ever_infected = 1
 
@@ -56,11 +56,12 @@ def sir_on_household(
         newly_infected = set()
         newly_recovered = set()
 
-        for node, node_state in list(state.items()):
+        for node in sorted(state):
+            node_state = state[node]
             if node_state != "I":
                 continue
 
-            for neighbor in sg.neighbors(node):
+            for neighbor in sorted(sg.neighbors(node)):
                 if state[neighbor] != "S" or neighbor in newly_infected:
                     continue
                 duration = float(sg[node][neighbor].get("total_duration_sec", 60.0))
@@ -86,9 +87,14 @@ def sir_on_household(
 
 def household_components(G: nx.Graph) -> dict[str, nx.Graph]:
     comps = {}
-    for comp in nx.connected_components(G):
-        sg = G.subgraph(comp).copy()
-        first_node = next(iter(sg.nodes()))
+    for comp in sorted(nx.connected_components(G), key=lambda nodes: min(nodes)):
+        nodes = sorted(comp)
+        sg = nx.Graph()
+        for node in nodes:
+            sg.add_node(node, **G.nodes[node])
+        for u, v, attrs in sorted(G.subgraph(nodes).edges(data=True)):
+            sg.add_edge(u, v, **attrs)
+        first_node = nodes[0]
         hhid = sg.nodes[first_node].get("hhid")
         if hhid:
             comps[hhid] = sg

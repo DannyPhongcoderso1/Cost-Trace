@@ -4,13 +4,13 @@
       "strategy": "degree",
       "prevention_rate_pct": 4.6,
       "transmission_coverage": 2.4,
-      "sir_reduction_pct": 1.4
+      "sir_reduction_pct": 2.0
     },
     "5": {
       "strategy": "gnn",
       "prevention_rate_pct": 26.8,
       "transmission_coverage": 14.3,
-      "sir_reduction_pct": 22.1
+      "sir_reduction_pct": 22.2
     },
     "10": {
       "strategy": "gnn",
@@ -19,6 +19,6 @@
       "sir_reduction_pct": 42.7
     }
   },
-  "gnn_minus_random_prevention_rate_k1_pct": 0.6999999999999997,
+  "gnn_minus_random_prevention_rate_k1_pct": 0.6000000000000001,
   "n_rows": 12
 }

@@ -1,0 +1,13 @@
+budget_k_pct,strategy,mean_infected_per_hh,std_infected_per_hh,ci95_low_infected_per_hh,ci95_high_infected_per_hh,baseline_mean_infected,reduction_vs_baseline_pct
+1,random,3.38,1.66,1.0,6.0,3.42,1.1
+1,degree,3.35,1.68,1.0,6.0,3.42,2.0
+1,betweenness,3.39,1.71,1.0,6.0,3.42,1.0
+1,gnn,3.29,1.71,0.0,6.0,3.42,3.7
+5,random,3.16,1.7,0.0,6.0,3.42,7.6
+5,degree,3.19,1.66,0.0,6.0,3.42,6.8
+5,betweenness,3.12,1.82,0.0,6.0,3.42,8.9
+5,gnn,2.66,1.95,0.0,6.0,3.42,22.2
+10,random,2.84,1.75,0.0,6.0,3.42,17.0
+10,degree,2.92,1.67,0.0,6.0,3.42,14.7
+10,betweenness,2.72,1.84,0.0,6.0,3.42,20.6
+10,gnn,1.96,2.0,0.0,6.0,3.42,42.6

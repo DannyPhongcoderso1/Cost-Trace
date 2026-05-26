@@ -1,0 +1,24 @@
+{
+  "best_by_budget": {
+    "1": {
+      "strategy": "degree",
+      "prevention_rate_pct": 4.6,
+      "transmission_coverage": 2.4,
+      "sir_reduction_pct": 2.0
+    },
+    "5": {
+      "strategy": "gnn",
+      "prevention_rate_pct": 26.8,
+      "transmission_coverage": 14.3,
+      "sir_reduction_pct": 22.2
+    },
+    "10": {
+      "strategy": "gnn",
+      "prevention_rate_pct": 49.0,
+      "transmission_coverage": 26.2,
+      "sir_reduction_pct": 42.6
+    }
+  },
+  "gnn_minus_random_prevention_rate_k1_pct": 0.6000000000000001,
+  "n_rows": 12
+}

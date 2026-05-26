@@ -1,0 +1,13 @@
+{
+  "beta": 0.25,
+  "gamma": 0.1,
+  "t_max": 30,
+  "n_runs": 50,
+  "baseline_mean_infected_per_hh": 3.4186,
+  "baseline_std_infected_per_hh": 1.6396,
+  "baseline_ci95_low": 1.0,
+  "baseline_ci95_high": 6.0,
+  "observed_attack_rate_pct": 70.9,
+  "duration_scaling": "log1p(total_duration_sec) / log1p(max_duration_sec)",
+  "note": "SIR runs are performed per household component with index case as seed."
+}

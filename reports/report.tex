@@ -1,0 +1,92 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\title{Budget-Constrained Epidemic Intervention Using Graph Neural Network Risk Ranking}
+\author{CostTrace Team}
+\begin{document}
+\maketitle
+\begin{abstract}
+This report summarizes Phase 05 of CostTrace: final network visualizations, statistical charts, and an IEEE-style evaluation of budget-constrained epidemic intervention on the SASHTS household contact network. The central question is which node-selection strategy maximizes infection reduction when only $k\%$ of nodes can be isolated.
+\end{abstract}
+
+\section{Introduction}
+COVID-19 contact tracing motivates a graph problem: after likely sources or high-risk contacts are identified, public health teams still need to decide whom to isolate under limited capacity. DeepTrace shows that graph neural networks and maximum-likelihood ideas can identify influential infection sources, but it does not directly optimize the downstream isolation decision. CostTrace fills this gap by formulating a budget-constrained top-$k$ intervention problem. The study compares Random, Degree, Betweenness, and GraphSAGE-based ranking, then evaluates each strategy through SIR simulation on real household proximity data.
+
+\section{Data Source}
+The dataset is the South Africa Household Transmission Study (SASHTS), containing 340 individuals and 542 weighted proximity edges across 88 household components. The processed graph removes invalid records and self-loops, preserves weighted contact duration, and keeps household-level connected components for intervention simulation. Average household size is 3.86, average component density is 0.963, and observed SARS-CoV-2 attack rate is 70.9\%.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../visualizations/network_overview.png}
+\caption{Contact network overview. Node color indicates Louvain household community, size indicates degree, and red nodes show the top composite-risk individuals.}
+\end{figure}
+
+\section{Methodology}
+Node importance is measured with degree centrality, betweenness centrality, closeness centrality, weighted degree, and a composite risk score. Louvain community detection is applied with contact-duration weights; the result is 88 communities with modularity 0.970. The GNN component uses a weighted GraphSAGE classifier with topology, contact, demographic, and epidemiological features. The trained model reached validation AUC 0.804 and test AUC 0.767. Intervention is implemented as top-$k$ selection for budgets 1\%, 5\%, and 10\%, followed by SIR simulation with $\beta=0.25$, $\gamma=0.1$, $T=30$, and 50 Monte Carlo runs.
+
+\section{Results and Evaluation}
+The baseline simulation gives a mean of 3.42 infected nodes per household with standard deviation 1.64. The strongest result is the GNN strategy, which reduces mean infected nodes by 3.8\% at $k=1\%$, 22.2\% at $k=5\%$, and 42.7\% at $k=10\%$. At $k=1\%$, GNN exceeds Degree by 1.8 percentage points in SIR reduction.
+
+\begin{table}[h]
+\centering
+\caption{SIR intervention comparison}
+\begin{tabular}{llrr}
+\toprule
+Budget & Strategy & Mean infected & Reduction \\
+\midrule
+1\% & Random & 3.38 & 1.2\% \\
+1\% & Degree & 3.35 & 2.0\% \\
+1\% & Betweenness & 3.39 & 1.0\% \\
+1\% & Gnn & 3.29 & 3.8\% \\
+5\% & Random & 3.16 & 7.6\% \\
+5\% & Degree & 3.19 & 6.6\% \\
+5\% & Betweenness & 3.12 & 8.9\% \\
+5\% & Gnn & 2.66 & 22.2\% \\
+10\% & Random & 2.85 & 16.8\% \\
+10\% & Degree & 2.92 & 14.6\% \\
+10\% & Betweenness & 2.72 & 20.4\% \\
+10\% & Gnn & 1.96 & 42.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Top composite-risk nodes}
+\begin{tabular}{lrrr}
+\toprule
+Node & Degree & Betweenness & Risk \\
+\midrule
+S005-003 & 2 & 1.000 & 0.845 \\
+J008-004 & 5 & 0.000 & 0.758 \\
+J063-004 & 4 & 1.000 & 0.748 \\
+S005-002 & 2 & 0.000 & 0.731 \\
+S008-002 & 2 & 1.000 & 0.725 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../visualizations/chart_heatmap.png}
+\caption{Main result heatmap: total infection reduction by strategy and budget.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../visualizations/chart_sir_baseline.png}
+\caption{Baseline SIR curve reconstructed from aggregate simulation summaries.}
+\end{figure}
+
+\section{Conclusion and Future Work}
+Phase 05 confirms that learned risk ranking is the most effective intervention rule in this repository's current experiments. The GNN strategy is especially valuable when budget is at least 5\%, while degree remains a competitive lightweight baseline. Limitations include the small household-level graph, a static rather than temporal graph representation, and an SIR model that does not yet filter recovered nodes before candidate selection. Future work should add recovery-aware top-$k$ filtering, dynamic temporal contacts, spatiotemporal features, and online intervention updates as new cases arrive.
+
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{1}
+\bibitem{graphsage} W. Hamilton, Z. Ying, and J. Leskovec, ``Inductive representation learning on large graphs,'' NeurIPS, 2017.
+\bibitem{epidemics} I. Kiss, J. Miller, and P. Simon, \emph{Mathematics of Epidemics on Networks}, Springer, 2017.
+\bibitem{deeptrace} C. W. Tan, P. D. Yu, S. Chen, and H. V. Poor, ``DeepTrace: Learning to optimize contact tracing in epidemic networks with graph neural networks,'' 2025.
+\end{thebibliography}
+\end{document}

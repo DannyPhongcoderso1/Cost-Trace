@@ -1,92 +1,1293 @@
-\documentclass[conference]{IEEEtran}
+% !TeX program = xelatex
+% !TeX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{report}
+
+%% ─── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  a4paper,
+  left=2.5cm,
+  right=2.0cm,
+  top=2.2cm,
+  bottom=2.2cm,
+  includeheadfoot,
+  headheight=15pt
+]{geometry}
+
+%% ─── Font & encoding ─────────────────────────────────────────────────────────
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T5]{fontenc}
+  \usepackage[vietnamese]{babel}
+  \usepackage{mathptmx}
+  \usepackage[scaled=0.95]{helvet}
+  \usepackage{courier}
+\else
+  \usepackage{fontspec}
+  \setmainfont{Times New Roman}
+  \setsansfont{Arial}
+  \setmonofont{Consolas}
+\fi
+
+%% ─── Layout & spacing ────────────────────────────────────────────────────────
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.0cm}
+\setlength{\parskip}{4pt}
+
+%% ─── Graphics & tables ───────────────────────────────────────────────────────
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{font=small, labelfont=bf, format=hang}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.12}
+
+%% ─── Math ────────────────────────────────────────────────────────────────────
 \usepackage{amsmath}
-\title{Budget-Constrained Epidemic Intervention Using Graph Neural Network Risk Ranking}
-\author{CostTrace Team}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+%% ─── Colors & hyperlinks ─────────────────────────────────────────────────────
+\usepackage{xcolor}
+\definecolor{darkblue}{RGB}{0,51,102}
+\definecolor{lightgray}{RGB}{245,245,245}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks = true,
+    linkcolor  = black,
+    citecolor  = darkblue,
+    urlcolor   = darkblue,
+    pdftitle   = {CostTrace -- Báo cáo đồ án cuối kỳ},
+    pdfauthor  = {CostTrace Team},
+    pdfsubject = {Budget-Constrained Epidemic Intervention on Contact Networks},
+    pdfkeywords= {contact tracing, GNN, GraphSAGE, epidemic network, budget intervention}
+}
+
+%% ─── Lists & enumerations ────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=4pt}
+\setlist[enumerate]{noitemsep, topsep=4pt}
+
+%% ─── Header & footer ─────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{CostTrace}}
+\fancyhead[R]{\small\textit{Budget-Constrained Epidemic Intervention}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+%% ─── Chapter & section formatting ───────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\bfseries\Large\sffamily}
+  {\sffamily\chaptername\ \thechapter}
+  {0.5em}{\Huge\bfseries}
+\titlespacing*{\chapter}{0pt}{-10pt}{20pt}
+
+\titleformat{\section}
+  {\bfseries\large}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\bfseries\normalsize}{\thesubsection}{1em}{}
+
+%% ─── TOC formatting ──────────────────────────────────────────────────────────
+\usepackage{tocloft}
+\renewcommand{\contentsname}{MỤC LỤC}
+\renewcommand{\listfigurename}{DANH SÁCH HÌNH MINH HỌA}
+\renewcommand{\listtablename}{DANH SÁCH BẢNG BIỂU}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\chaptername}{CHƯƠNG}
+\renewcommand{\bibname}{TÀI LIỆU THAM KHẢO}
+
+%% ─── Code listings ───────────────────────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle   = \ttfamily\small,
+  keywordstyle = \color{darkblue}\bfseries,
+  commentstyle = \color{gray}\itshape,
+  stringstyle  = \color{teal},
+  breaklines   = true,
+  frame        = single,
+  frameround   = tttt,
+  backgroundcolor = \color{lightgray},
+  numbers      = left,
+  numberstyle  = \tiny\color{gray},
+  xleftmargin  = 1.5em,
+  aboveskip    = 8pt,
+  belowskip    = 8pt
+}
+
+%% ─── Column types ────────────────────────────────────────────────────────────
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+%% ─── Theorem environments ────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Định nghĩa}[chapter]
+\newtheorem{remark}{Nhận xét}[chapter]
+
+%% ─── Graphics path ───────────────────────────────────────────────────────────
+\graphicspath{%
+  {visualizations/}%
+  {results/figures/topology/}%
+  {results/figures/intervention/}%
+  {../visualizations/}%
+  {../results/figures/topology/}%
+  {../results/figures/intervention/}%
+}
+
+%% ─── Utility ─────────────────────────────────────────────────────────────────
+\usepackage{seqsplit}
+\usepackage{microtype}
+\usepackage{csquotes}
+\newcommand{\pathcell}[1]{\begingroup\footnotesize\ttfamily\expandafter\seqsplit\expandafter{\detokenize{#1}}\endgroup}
+
+%%═══════════════════════════════════════════════════════════════════════════════
 \begin{document}
-\maketitle
-\begin{abstract}
-This report summarizes Phase 05 of CostTrace: final network visualizations, statistical charts, and an IEEE-style evaluation of budget-constrained epidemic intervention on the SASHTS household contact network. The central question is which node-selection strategy maximizes infection reduction when only $k\%$ of nodes can be isolated.
-\end{abstract}
+%%═══════════════════════════════════════════════════════════════════════════════
 
-\section{Introduction}
-COVID-19 contact tracing motivates a graph problem: after likely sources or high-risk contacts are identified, public health teams still need to decide whom to isolate under limited capacity. DeepTrace shows that graph neural networks and maximum-likelihood ideas can identify influential infection sources, but it does not directly optimize the downstream isolation decision. CostTrace fills this gap by formulating a budget-constrained top-$k$ intervention problem. The study compares Random, Degree, Betweenness, and GraphSAGE-based ranking, then evaluates each strategy through SIR simulation on real household proximity data.
-
-\section{Data Source}
-The dataset is the South Africa Household Transmission Study (SASHTS), containing 340 individuals and 542 weighted proximity edges across 88 household components. The processed graph removes invalid records and self-loops, preserves weighted contact duration, and keeps household-level connected components for intervention simulation. Average household size is 3.86, average component density is 0.963, and observed SARS-CoV-2 attack rate is 70.9\%.
-
-\begin{figure}[h]
+%% ─── Title page ──────────────────────────────────────────────────────────────
+\begin{titlepage}
 \centering
-\includegraphics[width=\linewidth]{../visualizations/network_overview.png}
-\caption{Contact network overview. Node color indicates Louvain household community, size indicates degree, and red nodes show the top composite-risk individuals.}
-\end{figure}
+\vspace*{0.3cm}
+{\normalsize ĐẠI HỌC KINH TẾ TP. HỒ CHÍ MINH\par}
+{\normalsize TRƯỜNG CÔNG NGHỆ VÀ THIẾT KẾ\par}
+{\normalsize KHOA CÔNG NGHỆ THÔNG TIN KINH DOANH\par}
+\vspace{1.0cm}
+\rule{\textwidth}{1.5pt}\\[6pt]
+{\LARGE\bfseries BÁO CÁO ĐỒ ÁN CUỐI KỲ\par}
+\vspace{0.3cm}
+{\large MÔN HỌC: PHÂN TÍCH DỮ LIỆU MẠNG XÃ HỘI\par}
+\rule{\textwidth}{1.5pt}
+\vspace{1.2cm}
+{\Huge\bfseries\sffamily COSTTRACE\par}
+\vspace{0.5cm}
+{\LARGE\bfseries CAN THIỆP DỊCH TỄ CÓ RÀNG BUỘC NGÂN SÁCH\\
+TRÊN MẠNG LƯỚI TIẾP XÚC\par}
+\vspace{0.4cm}
+{\large\itshape Budget-Constrained Epidemic Intervention on Contact Networks\par}
+\vfill
+\begin{tabular}{@{}r@{\hspace{8pt}}l@{}}
+\textbf{Giảng viên hướng dẫn:} & \dotfill\\[6pt]
+\textbf{Nhóm thực hiện:}        & CostTrace Team\\[6pt]
+\textbf{Lớp học phần:}          & \dotfill\\[6pt]
+\textbf{Khóa học:}              & \dotfill\\
+\end{tabular}
+\vfill
+\rule{\textwidth}{0.4pt}
+{\normalsize Thành phố Hồ Chí Minh, tháng 06 năm 2026\par}
+\end{titlepage}
 
-\section{Methodology}
-Node importance is measured with degree centrality, betweenness centrality, closeness centrality, weighted degree, and a composite risk score. Louvain community detection is applied with contact-duration weights; the result is 88 communities with modularity 0.970. The GNN component uses a weighted GraphSAGE classifier with topology, contact, demographic, and epidemiological features. The trained model reached validation AUC 0.804 and test AUC 0.767. Intervention is implemented as top-$k$ selection for budgets 1\%, 5\%, and 10\%, followed by SIR simulation with $\beta=0.25$, $\gamma=0.1$, $T=30$, and 50 Monte Carlo runs.
+%% ─── Front matter ────────────────────────────────────────────────────────────
+\pagenumbering{roman}
+\setcounter{page}{1}
 
-\section{Results and Evaluation}
-The baseline simulation gives a mean of 3.42 infected nodes per household with standard deviation 1.64. The strongest result is the GNN strategy, which reduces mean infected nodes by 3.8\% at $k=1\%$, 22.2\% at $k=5\%$, and 42.7\% at $k=10\%$. At $k=1\%$, GNN exceeds Degree by 1.8 percentage points in SIR reduction.
+%% ─── Lời mở đầu ─────────────────────────────────────────────────────────────
+\chapter*{LỜI MỞ ĐẦU}
+\addcontentsline{toc}{chapter}{LỜI MỞ ĐẦU}
 
-\begin{table}[h]
+Trước hết, nhóm thực hiện xin gửi lời cảm ơn chân thành đến giảng viên phụ trách học phần Phân tích Dữ liệu Mạng xã hội vì đã định hướng, gợi mở và tạo điều kiện để nhóm tiếp cận một bài toán vừa có nền tảng lý thuyết mạng vững chắc, vừa có ý nghĩa thực tiễn trong bối cảnh dịch tễ học hiện đại. Trong quá trình thực hiện đồ án, nhóm nhận thấy rằng dữ liệu mạng xã hội không chỉ giới hạn ở các nền tảng trực tuyến như Facebook hay Twitter, mà còn xuất hiện rất rõ nét trong các quan hệ tiếp xúc vật lý giữa con người: mỗi cá nhân có thể được xem như một node, mỗi lần tiếp xúc gần là một cạnh có trọng số, và cấu trúc kết nối giữa các node có thể quyết định tốc độ cũng như phạm vi lan truyền của bệnh truyền nhiễm.
+
+Đề tài \textit{CostTrace} được xây dựng từ nhận định đó. Thay vì chỉ dừng lại ở bài toán truy vết nguồn lây hoặc xác định cá nhân có nguy cơ cao, nhóm đặt trọng tâm vào câu hỏi hậu truy vết: nếu nguồn lực y tế là hữu hạn, cần ưu tiên can thiệp vào những cá nhân nào để giảm mức độ lan truyền một cách hiệu quả nhất? Đây là một câu hỏi có ý nghĩa thực tiễn lớn, vì trong các đợt bùng phát dịch, việc cách ly hoặc theo dõi toàn bộ các cá nhân trong mạng lưới thường không khả thi về mặt nguồn lực. Khi ngân sách can thiệp chỉ cho phép chọn một tỷ lệ nhỏ node --- ví dụ 1\%, 5\% hoặc 10\% --- chiến lược lựa chọn node trở thành yếu tố quyết định hiệu quả phòng dịch.
+
+Báo cáo này trình bày toàn bộ quy trình nghiên cứu của CostTrace, từ thu thập và chuẩn hóa dữ liệu SASHTS, xây dựng đồ thị tiếp xúc có trọng số, phân tích các chỉ số mạng lưới, phát hiện cộng đồng bằng Louvain, huấn luyện mô hình Weighted GraphSAGE proxy, cho đến đánh giá các chiến lược chọn node dưới ràng buộc ngân sách bằng phân tích đối chứng (counterfactual transmission analysis) và mô phỏng SIR. Nhóm cố gắng trình bày theo hướng học thuật, nhấn mạnh lập luận, giới hạn phương pháp và diễn giải kết quả thay vì đơn thuần liệt kê đầu ra kỹ thuật.
+
+Một điểm quan trọng cần được khẳng định ngay từ đầu là CostTrace không tuyên bố thay thế các hệ thống dịch tễ học chuyên nghiệp. Dự án được thực hiện trong phạm vi học tập và nghiên cứu, nhằm chứng minh cách các kỹ thuật phân tích mạng xã hội, học máy trên đồ thị và mô phỏng dịch tễ có thể kết hợp để hỗ trợ quyết định can thiệp. Các kết quả trong báo cáo cần được hiểu như bằng chứng thực nghiệm trên một bộ dữ liệu cụ thể, không phải khuyến nghị y tế trực tiếp cho môi trường triển khai thực tế.
+
+\vspace{0.5cm}
+\noindent\textit{Trân trọng,}
+
+\noindent\textit{Nhóm CostTrace}
+
+%% ─── Tóm tắt ─────────────────────────────────────────────────────────────────
+\chapter*{TÓM TẮT NGHIÊN CỨU}
+\addcontentsline{toc}{chapter}{TÓM TẮT NGHIÊN CỨU}
+
+Trong các mạng lưới tiếp xúc dịch tễ, không phải mọi cá nhân đều có vai trò đồng đều đối với quá trình lan truyền. Một số node có nhiều tiếp xúc trực tiếp (superspreader), một số node đóng vai trò cầu nối giữa các cụm cộng đồng, và một số node mang nguy cơ lây nhiễm cao do đồng thời sở hữu đặc trưng cấu trúc, hành vi và dịch tễ. Các phương pháp truy vết hiện đại, tiêu biểu là DeepTrace \cite{deepTrace2025}, tập trung vào việc xác định nguồn lây bằng Graph Neural Networks và ước lượng hợp lệ cực đại. Tuy nhiên, sau khi có thông tin rủi ro, một bài toán thực tiễn quan trọng còn bỏ ngỏ là: với ngân sách can thiệp hữu hạn, nên chọn những node nào để cách ly, giám sát hoặc ưu tiên xét nghiệm?
+
+\textit{CostTrace} tiếp cận bài toán này dưới dạng \textit{budget-constrained node selection}. Dữ liệu sử dụng là SASHTS \cite{sashts2021}, gồm 340 cá nhân thuộc 88 hộ gia đình, 140.542 sự kiện tiếp xúc thô và 542 cạnh tiếp xúc sau khi tổng hợp. Mỗi cạnh được gán trọng số theo tổng thời lượng tiếp xúc; dữ liệu có nhãn SARS status, vai trò index/contact và nhãn transmission ở cấp cặp tiếp xúc. Trên đồ thị này, nhóm tính các chỉ số Degree Centrality, Betweenness Centrality, Closeness Centrality và weighted degree; phát hiện cộng đồng bằng Louvain \cite{louvain2008}; và huấn luyện một mô hình Weighted GraphSAGE proxy \cite{graphsage2017} để tạo điểm nguy cơ nhiễm cho từng node.
+
+Thực nghiệm so sánh bốn chiến lược chọn node --- Random, Degree, Betweenness và GNN --- ở ba mức ngân sách 1\%, 5\% và 10\%. Kết quả cho thấy khi ngân sách cực thấp (k\,=\,1\%), Degree là chiến lược tốt nhất theo prevention rate trong counterfactual evaluation, đạt 4,6\%, trong khi GNN đạt 3,9\%. Tuy nhiên, khi ngân sách tăng lên 5\% và 10\%, GNN vượt trội rõ rệt với prevention rate lần lượt là 26,8\% và 49,0\%, và SIR reduction lần lượt là 22,2\% và 42,7\%. Kết quả này cho thấy mô hình học trên đồ thị phát huy hiệu quả khi có đủ ngân sách để khai thác đồng thời nhiều tín hiệu rủi ro, trong khi centrality đơn lẻ vẫn là baseline mạnh trong điều kiện ngân sách rất hạn chế.
+
+\vspace{6pt}
+\noindent\textbf{Từ khóa:} contact tracing, graph neural network, GraphSAGE, budget-constrained intervention, epidemic network, SIR model, community detection, Louvain, SASHTS.
+
+%% ─── Lists ───────────────────────────────────────────────────────────────────
+\listoftables
+\addcontentsline{toc}{chapter}{DANH SÁCH BẢNG BIỂU}
+\listoffigures
+\addcontentsline{toc}{chapter}{DANH SÁCH HÌNH MINH HỌA}
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\chapter{GIỚI THIỆU TỔNG QUAN}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\section{Bối cảnh dịch bệnh và vai trò của phân tích mạng}
+
+Dịch bệnh truyền nhiễm là một trong những bài toán điển hình cho thấy mối quan hệ chặt chẽ giữa cấu trúc xã hội và hiện tượng lan truyền. Trong các mô hình dịch tễ cổ điển như SIR (Susceptible--Infectious--Recovered), quần thể thường được giả định là đồng nhất và trộn lẫn ngẫu nhiên hoàn toàn \cite{kermack1927, keeling2005}. Tuy nhiên, thực tế tiếp xúc của con người là dị nhất và có cấu trúc: mỗi cá nhân chỉ tiếp xúc với một tập con nhỏ của dân số, và cấu trúc của tập con này quyết định trực tiếp con đường lan truyền của mầm bệnh \cite{watts1998, barabasi1999, pastorSatorras2001}.
+
+Phân tích mạng xã hội cung cấp một ngôn ngữ hình thức để mô hình hóa các mối quan hệ này. Một cộng đồng người có thể được biểu diễn dưới dạng đồ thị $G=(V,E,W)$, trong đó $V$ là tập cá nhân, $E$ là tập quan hệ tiếp xúc và $W$ là ma trận trọng số biểu diễn cường độ tiếp xúc. Khi đó, một cá nhân có degree cao có nhiều cơ hội truyền bệnh trực tiếp; một cá nhân có betweenness cao đóng vai trò cầu nối giữa các nhóm cộng đồng; một cộng đồng có mật độ cao tương ứng với một ổ dịch cục bộ \cite{freeman1977, newman2006}. Nhờ vậy, các khái niệm của phân tích mạng không chỉ mang ý nghĩa toán học mà còn có khả năng diễn giải dịch tễ học rõ ràng.
+
+Trong thực tế, các biện pháp y tế công cộng luôn bị ràng buộc bởi nguồn lực. Việc xét nghiệm, cách ly hoặc theo dõi toàn bộ dân số là tốn kém và đôi khi bất khả thi. Vì vậy, bài toán chọn một tập nhỏ cá nhân cần ưu tiên can thiệp trở nên có ý nghĩa chiến lược: một chiến lược tốt cần vừa tận dụng thông tin cấu trúc mạng, vừa xét đến các đặc trưng dịch tễ và hành vi để đưa ra quyết định có căn cứ khoa học.
+
+\section{Từ truy vết nguồn lây đến can thiệp có ngân sách}
+
+Bài báo DeepTrace \cite{deepTrace2025} đặt nền tảng cho cách nhìn hiện đại về contact tracing như một bài toán tối ưu trên đồ thị. Thay vì chỉ truy vết thủ công, DeepTrace mô hình hóa quá trình truy vết thuận (forward tracing) và truy vết ngược (backward tracing) dưới dạng bài toán khám phá đồ thị trực tuyến, sử dụng Graph Neural Network để ước lượng xác suất hợp lệ cực đại (maximum likelihood) khi xác định node nguồn lây. Đây là hướng tiếp cận quan trọng, thể hiện sự kết hợp giữa lý thuyết xác suất thống kê và học máy trên đồ thị.
+
+Tuy nhiên, việc tìm ra node có khả năng là nguồn lây mới chỉ giải quyết một phần của chuỗi quyết định y tế công cộng. Sau khi đã có điểm rủi ro hoặc danh sách node nghi vấn, nhà quản lý vẫn phải trả lời câu hỏi: nếu chỉ có thể can thiệp vào một số ít người, nên chọn ai? Câu hỏi này đặc biệt quan trọng trong giai đoạn dịch lan nhanh, khi tốc độ hành động và mức độ ưu tiên quyết định hiệu quả kiểm soát tổng thể.
+
+Nghiên cứu về truy vết tiếp xúc ngược (backward contact tracing) của Kojaku et al.\ \cite{kojaku2021} và Cencetti et al.\ \cite{cencetti2021} đã cho thấy rằng không phải mọi cạnh tiếp xúc đều có vai trò như nhau trong chuỗi lây truyền. Điều này gợi ý rằng một chiến lược can thiệp thông minh, thay vì dàn trải theo tỷ lệ, cần tập trung vào những node và cạnh có khả năng lan truyền cao nhất. Bradshaw et al.\ \cite{bradshaw2021} cũng chỉ ra rằng truy vết hai chiều (bidirectional) cải thiện đáng kể hiệu quả kiểm soát so với truy vết thuần túy về phía trước.
+
+\textit{CostTrace} được xây dựng như một phần mở rộng tự nhiên của hướng nghiên cứu này. Nếu DeepTrace tập trung vào việc nhận diện nguồn lây, CostTrace tập trung vào bước tiếp theo: lựa chọn node để can thiệp dưới ràng buộc ngân sách. Bài toán không phải là ``cách ly bao nhiêu node tùy ý'', mà là so sánh các chiến lược chọn top-$k$ node với $k$ được xác định trước theo tỷ lệ ngân sách thực tế.
+
+\section{Câu hỏi nghiên cứu}
+
+Đồ án đặt ra ba câu hỏi nghiên cứu chính:
+
+\begin{enumerate}[label=\textbf{RQ\arabic*.}, leftmargin=2.0cm, itemsep=6pt]
+    \item Với một mạng lưới tiếp xúc dịch tễ có trọng số, các chỉ số mạng truyền thống như Degree Centrality và Betweenness Centrality có đủ hiệu quả để xác định node cần ưu tiên can thiệp, hay cần đến mô hình học trên đồ thị để cải thiện đáng kể?
+
+    \item Mô hình Weighted GraphSAGE proxy, khi kết hợp đặc trưng cấu trúc đồ thị và đặc trưng dịch tễ học từ metadata, có tạo ra ranking can thiệp tốt hơn các baseline centrality đơn giản hay không?
+
+    \item Hiệu quả tương đối của từng chiến lược thay đổi như thế nào khi ngân sách can thiệp thay đổi từ 1\% lên 5\% và 10\% tổng số node trong mạng?
+\end{enumerate}
+
+Các câu hỏi này được kiểm định thông qua hai lớp đánh giá độc lập. Lớp thứ nhất là phân tích đối chứng (counterfactual evaluation) dựa trên nhãn transmission thực tế: nếu một node được chọn để can thiệp, bao nhiêu cạnh lây truyền quan sát được sẽ bị chặn? Lớp thứ hai là mô phỏng SIR trên từng household component để ước lượng mức độ giảm trung bình số ca nhiễm sau can thiệp.
+
+\section{Đóng góp của đồ án}
+
+Đồ án có bốn đóng góp chính, được trình bày theo mức độ tầm quan trọng:
+
+\paragraph{Đóng góp 1: Pipeline dữ liệu dịch tễ học có cấu trúc.} Nhóm xây dựng một pipeline hoàn chỉnh từ raw proximity events sang weighted contact graph, bảo toàn thông tin hộ gia đình, thời lượng tiếp xúc và nhãn dịch tễ. Pipeline này có tính tái lập và có thể được mở rộng sang các bộ dữ liệu tiếp xúc vật lý khác.
+
+\paragraph{Đóng góp 2: Kết hợp phân tích mạng truyền thống với GNN.} Nhóm kết hợp centrality metrics cổ điển với mô hình GraphSAGE proxy để tạo ra nhiều chiến lược ranking node. Việc so sánh trực tiếp các phương pháp ở cùng điều kiện thực nghiệm cho phép đánh giá giá trị gia tăng của mô hình học.
+
+\paragraph{Đóng góp 3: Bài toán budget-constrained top-$k$ selection.} Nhóm thiết kế và thực nghiệm bài toán chọn $k$ node dưới ràng buộc ngân sách ở các mức 1\%, 5\% và 10\%, phản ánh ràng buộc nguồn lực trong thực tế y tế công cộng.
+
+\paragraph{Đóng góp 4: Đánh giá hai lớp với ground truth thực tế.} Nhóm đánh giá can thiệp bằng cả counterfactual transmission coverage lẫn mô phỏng SIR, tránh phụ thuộc vào một chỉ số duy nhất. Đặc biệt, việc sử dụng nhãn transmission thực tế (cột \texttt{pair\_sars}) của SASHTS tạo ra một lớp đánh giá mạnh hơn so với các nghiên cứu chỉ dựa trên mô phỏng thuần túy.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\chapter{DỮ LIỆU VÀ TIỀN XỬ LÝ}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\section{Nguồn dữ liệu SASHTS}
+
+Bộ dữ liệu sử dụng trong nghiên cứu là \textbf{SASHTS} --- \textit{South Africa Household Transmission Study} \cite{sashts2021}. Đây là dữ liệu tiếp xúc vật lý trong hộ gia đình, được thu thập trong bối cảnh nghiên cứu lây truyền SARS-CoV-2 tại hai địa điểm Soweto và Klerksdorp, Nam Phi, trong giai đoạn 2020--2021. Dữ liệu bao gồm hai nhóm thành phần chính.
+
+Thành phần thứ nhất, \texttt{sashts\_contact\_network.csv}, ghi nhận các sự kiện tiếp xúc gần (close-proximity events) giữa các cá nhân, được thu thập bằng thiết bị cảm biến đeo tay (wearable proximity sensors). Mỗi dòng là một sự kiện tiếp xúc, bao gồm thời điểm, thời lượng, định danh hai người tham gia, trạng thái SARS-CoV-2 của mỗi người, và nhãn lây truyền ở cấp cặp (\texttt{pair\_sars}).
+
+Thành phần thứ hai, \texttt{sashts\_metadata.csv}, mô tả các thuộc tính nhân khẩu học và lâm sàng của 340 cá nhân tham gia nghiên cứu, bao gồm địa điểm, nhóm tuổi, giới tính, chỉ số BMI, trạng thái hút thuốc, trạng thái huyết thanh học, biến thể virus, vai trò index/contact và trạng thái SARS-CoV-2 chính thức.
+
+Lợi thế của SASHTS so với các bộ dữ liệu mạng xã hội tổng quát là sự kết hợp đồng thời giữa dữ liệu tiếp xúc vật lý đo lường trực tiếp (thông qua cảm biến), thông tin dịch tễ học có độ chính xác cao, và nhãn lây truyền thực tế ở cấp cặp. Điều này cho phép nhóm không chỉ phân tích cấu trúc mạng mà còn thực hiện đánh giá counterfactual trực tiếp --- một điểm mạnh hiếm gặp trong các nghiên cứu tương tự.
+
+\begin{table}[H]
 \centering
-\caption{SIR intervention comparison}
-\begin{tabular}{llrr}
+\caption{Tổng quan dữ liệu SASHTS sau tiền xử lý}
+\label{tab:sashts_overview}
+\begin{tabular}{L{6.5cm} C{3.5cm} L{5cm}}
 \toprule
-Budget & Strategy & Mean infected & Reduction \\
+\textbf{Thành phần} & \textbf{Giá trị} & \textbf{Ý nghĩa}\\
 \midrule
-1\% & Random & 3.38 & 1.2\% \\
-1\% & Degree & 3.35 & 2.0\% \\
-1\% & Betweenness & 3.39 & 1.0\% \\
-1\% & Gnn & 3.29 & 3.8\% \\
-5\% & Random & 3.16 & 7.6\% \\
-5\% & Degree & 3.19 & 6.6\% \\
-5\% & Betweenness & 3.12 & 8.9\% \\
-5\% & Gnn & 2.66 & 22.2\% \\
-10\% & Random & 2.85 & 16.8\% \\
-10\% & Degree & 2.92 & 14.6\% \\
-10\% & Betweenness & 2.72 & 20.4\% \\
-10\% & Gnn & 1.96 & 42.7\% \\
+Số cá nhân                     & 340     & Node trong đồ thị tiếp xúc\\
+Số hộ gia đình                 & 88      & Component tự nhiên của mạng\\
+Số sự kiện tiếp xúc thô        & 140.542 & Proximity events trước tổng hợp\\
+Số cạnh sau tổng hợp           & 542     & Weighted contact edges\\
+Số ca SARS dương tính          & 241     & Nhãn positive cho GNN\\
+Số ca SARS âm tính             & 99      & Nhóm đối chứng\\
+Attack rate quan sát           & 70,9\%  & Tỷ lệ SARS+ trên toàn bộ node\\
+Số cạnh có nhãn Transmission   & 286     & Ground truth lây truyền thực tế\\
+Địa điểm Soweto                & 197 người & Có timestamp thực\\
+Địa điểm Klerksdorp            & 143 người & Timestamp giả 1970\\
+Kích thước hộ gia đình         & 2--8 người & Trung bình 3,86\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\section{Đặc điểm cấu trúc dữ liệu}
+
+Một đặc điểm thiết yếu cần được hiểu đúng khi phân tích SASHTS là cấu trúc \textit{household-partitioned}: đồ thị gồm 88 thành phần liên thông riêng biệt, mỗi thành phần tương ứng với một hộ gia đình. Điều này xuất phát từ thiết kế nghiên cứu gốc: cảm biến chỉ được triển khai trong nội bộ mỗi hộ, không ghi nhận tiếp xúc liên hộ.
+
+Trong nhiều bài toán mạng xã hội, việc chỉ giữ Largest Connected Component (LCC) là thực hành phổ biến. Tuy nhiên, trong bối cảnh dịch tễ hộ gia đình, mỗi component không phải là nhiễu dữ liệu mà là một \textit{đơn vị quan sát có ý nghĩa}: mỗi hộ gia đình là một cluster lây truyền độc lập, có index case riêng, có nhãn transmission riêng và đại diện cho một chuỗi lây trong không gian sống chia sẻ. Do đó, CostTrace chủ động không lọc LCC và giữ toàn bộ 88 household components, bảo toàn cấu trúc nghiên cứu ban đầu.
+
+\begin{table}[H]
 \centering
-\caption{Top composite-risk nodes}
-\begin{tabular}{lrrr}
+\caption{Thống kê cấu trúc mạng ở cấp household}
+\label{tab:network_structure}
+\begin{tabular}{L{6.5cm} C{3.5cm} L{4.5cm}}
 \toprule
-Node & Degree & Betweenness & Risk \\
+\textbf{Chỉ số} & \textbf{Giá trị} & \textbf{Diễn giải}\\
 \midrule
-S005-003 & 2 & 1.000 & 0.845 \\
-J008-004 & 5 & 0.000 & 0.758 \\
-J063-004 & 4 & 1.000 & 0.748 \\
-S005-002 & 2 & 0.000 & 0.731 \\
-S008-002 & 2 & 1.000 & 0.725 \\
+Số node toàn mạng              & 340    & Tổng số cá nhân\\
+Số edge toàn mạng              & 542    & Cặp tiếp xúc sau tổng hợp\\
+Số household components        & 88     & Mỗi component là 1 hộ\\
+Kích thước household trung bình & 3,86  & Quy mô component nhỏ\\
+Density toàn mạng              & 0,0094 & Thấp do các hộ tách rời nhau\\
+Density trung bình trong household & 0,9633 & Kết nối rất dày đặc trong hộ\\
+Diameter trung bình trong household & 1,17 & Khoảng cách lây rất ngắn\\
+Clustering coefficient trung bình & 0,7994 & Mức tụ nhóm rất cao\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[h]
+Sự đối lập giữa density toàn mạng (0,0094) và density trung bình trong household (0,9633) là một insight quan trọng: khi nhìn toàn cục, đồ thị có vẻ thưa; nhưng xét đúng đơn vị dịch tễ học là hộ gia đình, các thành phần lại rất dày đặc. Điều này nhấn mạnh rằng việc chọn cấp phân tích phù hợp có ảnh hưởng trực tiếp đến diễn giải kết quả.
+
+\section{Quy trình tiền xử lý}
+
+Pipeline tiền xử lý được thiết kế theo năm bước tuần tự, mỗi bước có mục đích rõ ràng và có thể kiểm chứng độc lập.
+
+\begin{table}[H]
 \centering
-\includegraphics[width=\linewidth]{../visualizations/chart_heatmap.png}
-\caption{Main result heatmap: total infection reduction by strategy and budget.}
+\caption{Các bước tiền xử lý dữ liệu}
+\label{tab:preprocessing}
+\begin{tabularx}{\textwidth}{L{3.2cm} Y Y}
+\toprule
+\textbf{Bước} & \textbf{Thao tác} & \textbf{Mục đích}\\
+\midrule
+(1)~Kiểm định nguồn  & Đọc contact network và metadata; kiểm tra số dòng, số cá nhân, số hộ gia đình & Bảo đảm dữ liệu đầy đủ và nhất quán trước khi phân tích\\[4pt]
+(2)~Làm sạch cạnh    & Kiểm tra null; loại self-loop; chuẩn hóa thứ tự cặp node để tránh trùng lặp A--B và B--A & Tránh lỗi cấu trúc đồ thị và đếm trùng\\[4pt]
+(3)~Tổng hợp trọng số & Group theo cặp cá nhân; cộng \texttt{duration\_sec} và đếm số lần tiếp xúc & Tạo weighted contact graph phản ánh cường độ tiếp xúc\\[4pt]
+(4)~Gắn thuộc tính node & Gắn site, age, sex, SARS status, index/contact role và behavioral features từ metadata & Cho phép phân tích kết hợp cấu trúc và dịch tễ\\[4pt]
+(5)~Xuất artifact     & Lưu edgelist, nodelist, \texttt{graph.pkl}, EDA summary & Bảo đảm pipeline có thể tái chạy và kiểm chứng\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Trọng số cạnh và xử lý timestamp}
+
+Trong CostTrace, mỗi cạnh không chỉ biểu diễn sự tồn tại của tiếp xúc mà còn chứa hai thông tin định lượng: tổng thời lượng tiếp xúc (\texttt{total\_duration\_sec}) và số lần tiếp xúc (\texttt{n\_contacts}). Điều này phản ánh thực tế rằng xác suất lây truyền không chỉ phụ thuộc vào việc có tiếp xúc hay không, mà còn phụ thuộc vào thời lượng --- một nguyên tắc được xác nhận trong các nghiên cứu dịch tễ COVID-19 \cite{adam2020}.
+
+Dữ liệu timestamp có tính không đồng nhất do thiết kế thiết bị: site Soweto có timestamp thực (2020--2021), trong khi Klerksdorp có timestamp giả năm 1970 vì thiết bị không được trang bị đồng hồ thời gian thực. Nhóm xử lý vấn đề này bằng cách đánh dấu cờ \texttt{has\_real\_ts} để phân biệt hai nhóm dữ liệu, không loại bỏ dữ liệu Klerksdorp khỏi phân tích chính. Báo cáo không tuyên bố rằng đồ thị hiện tại là temporal graph đầy đủ; CostTrace được mô tả chính xác hơn là một \textit{static weighted contact graph} khai thác duration và contact count, với temporal analysis được đặt ở phần hướng phát triển.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\chapter{CƠ SỞ LÝ THUYẾT VÀ PHƯƠNG PHÁP}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\section{Mô hình hóa mạng lưới tiếp xúc}
+
+\begin{definition}[Đồ thị tiếp xúc có trọng số]
+Mạng lưới tiếp xúc được biểu diễn dưới dạng đồ thị vô hướng có trọng số $G=(V,E,W)$, trong đó $V$ là tập node (cá nhân), $E \subseteq V \times V$ là tập cạnh (các cặp tiếp xúc), và $W: E \rightarrow \mathbb{R}^+$ là hàm gán trọng số (tổng thời lượng tiếp xúc theo giây). Mỗi node $v \in V$ có vector thuộc tính $\mathbf{x}_v \in \mathbb{R}^d$ gồm thông tin cấu trúc, nhân khẩu học và dịch tễ học.
+\end{definition}
+
+Việc sử dụng đồ thị vô hướng phù hợp với bản chất dữ liệu proximity: cảm biến ghi nhận hai cá nhân ở gần nhau mà không xác định hướng lây truyền. Nhãn \texttt{pair\_sars} cho phép đánh giá counterfactual ở cấp cạnh: nếu một cạnh có nhãn \textit{Transmission}, việc cách ly một trong hai đầu cạnh được xem như kịch bản chặn đường lây truyền quan sát được.
+
+\section{Các chỉ số trung tâm mạng lưới}
+
+\subsection{Degree Centrality và Weighted Degree}
+
+Degree Centrality đo mức độ kết nối trực tiếp của một node trong component của nó. Với đồ thị không trọng số, Degree Centrality của node $v$ trong component $C$ có $n_C$ node được định nghĩa:
+\begin{equation}
+  C_D(v) = \frac{\deg(v)}{n_C - 1},
+  \label{eq:degree_centrality}
+\end{equation}
+trong đó $\deg(v)$ là số cạnh kề của $v$ trong component $C$. Trong nghiên cứu này, vì các hộ gia đình là các component nhỏ tách biệt, Degree Centrality được tính trong từng household component để phản ánh đúng ngữ cảnh tiếp xúc cục bộ.
+
+Weighted degree mở rộng degree bằng cách cộng trọng số các cạnh kề:
+\begin{equation}
+  C_W(v) = \sum_{u \in N(v)} w_{uv},
+  \label{eq:weighted_degree}
+\end{equation}
+trong đó $N(v)$ là tập hàng xóm của $v$ và $w_{uv}$ là trọng số cạnh $(u,v)$. Nếu degree trả lời câu hỏi một cá nhân tiếp xúc với bao nhiêu người, weighted degree trả lời tổng cường độ tiếp xúc là bao nhiêu --- có ý nghĩa dịch tễ quan trọng vì một người tiếp xúc lâu với ít người vẫn có thể tạo nguy cơ lây cao.
+
+\subsection{Betweenness Centrality}
+
+Betweenness Centrality đo mức độ một node nằm trên các đường đi ngắn nhất giữa các cặp node khác \cite{freeman1977}:
+\begin{equation}
+  C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}},
+  \label{eq:betweenness}
+\end{equation}
+trong đó $\sigma_{st}$ là tổng số đường đi ngắn nhất từ $s$ đến $t$, và $\sigma_{st}(v)$ là số đường đi ngắn nhất đó đi qua $v$.
+
+\begin{remark}
+Trong SASHTS, vì các component là hộ gia đình nhỏ (2--8 node), betweenness chủ yếu phản ánh vai trò trung gian trong cấu trúc hộ thay vì vai trò di chuyển giữa nhiều cộng đồng lớn. Báo cáo sử dụng betweenness như một baseline ranking hợp lý, nhưng không phóng đại nó thành bằng chứng về di chuyển xuyên cụm dân cư.
+\end{remark}
+
+\subsection{Closeness Centrality}
+
+Closeness Centrality đo mức gần trung bình từ một node đến các node còn lại trong component:
+\begin{equation}
+  C_C(v) = \frac{n_C - 1}{\sum_{u \neq v} d(v,u)},
+  \label{eq:closeness}
+\end{equation}
+trong đó $d(v,u)$ là khoảng cách ngắn nhất từ $v$ đến $u$. Trong đồ thị tiếp xúc hộ gia đình, closeness cao cho thấy node có thể tiếp cận các thành viên khác qua số bước ngắn. Chỉ số này được dùng như feature trong mô hình GraphSAGE proxy.
+
+\section{Phát hiện cộng đồng bằng Louvain}
+
+Phát hiện cộng đồng nhằm phân vùng tập node thành các nhóm có kết nối nội bộ dày đặc hơn kết nối ra ngoài. CostTrace sử dụng thuật toán Louvain \cite{louvain2008}, tối ưu hóa modularity theo hai pha lặp: (i) chuyển node giữa các community lân cận để tăng modularity, sau đó (ii) gộp mỗi community thành super-node và lặp lại.
+
+Modularity $Q$ được định nghĩa:
+\begin{equation}
+  Q = \frac{1}{2m} \sum_{ij} \left[ A_{ij} - \frac{k_i k_j}{2m} \right] \delta(c_i, c_j),
+  \label{eq:modularity}
+\end{equation}
+trong đó $A_{ij}$ là trọng số cạnh giữa $i$ và $j$, $k_i = \sum_j A_{ij}$ là tổng trọng số cạnh kề node $i$, $m = \frac{1}{2}\sum_{ij} A_{ij}$ là tổng trọng số toàn mạng, và $\delta(c_i, c_j)$ bằng 1 nếu $i$ và $j$ cùng community.
+
+Louvain được chọn thay vì Girvan--Newman \cite{girvanNewman2002} vì lý do thực nghiệm: Girvan--Newman dựa trên loại dần cạnh có edge betweenness cao nhất, phù hợp để minh họa nhưng có độ phức tạp $O(m^2 n)$ không phù hợp với đồ thị lớn. Louvain tối ưu modularity trực tiếp với độ phức tạp gần tuyến tính, hỗ trợ trọng số cạnh và được NetworkX cung cấp ổn định. Trong SASHTS, Louvain còn đóng vai trò kiểm định cấu trúc: nếu thuật toán khôi phục đúng 88 hộ gia đình, điều đó xác nhận ranh giới cộng đồng tự nhiên của dataset.
+
+\section{Mô hình Weighted GraphSAGE proxy}
+
+GraphSAGE \cite{graphsage2017} là một mô hình học biểu diễn node theo cơ chế tổng hợp thông tin từ hàng xóm (neighborhood aggregation). CostTrace triển khai một biến thể \textit{Weighted GraphSAGE proxy} bằng thuần PyTorch, sử dụng weighted mean aggregation thay vì phụ thuộc vào PyTorch Geometric, phù hợp hơn với môi trường đồ án.
+
+Quá trình cập nhật biểu diễn node qua $L$ lớp được mô tả:
+\begin{equation}
+  \mathbf{h}_v^{(l)} = \sigma\!\left( \mathbf{W}^{(l)} \cdot \text{CONCAT}\!\left( \mathbf{h}_v^{(l-1)},\; \frac{\sum_{u \in N(v)} w_{uv}\, \mathbf{h}_u^{(l-1)}}{\sum_{u \in N(v)} w_{uv}} \right) \right),
+  \label{eq:graphsage}
+\end{equation}
+trong đó $\mathbf{h}_v^{(0)} = \mathbf{x}_v$ là vector đặc trưng khởi tạo, $\mathbf{W}^{(l)}$ là ma trận tham số học được ở lớp $l$, và $\sigma$ là hàm kích hoạt ReLU.
+
+Mô hình không nhằm tái hiện toàn bộ DeepTrace mà đóng vai trò proxy để học ranking rủi ro từ cấu trúc đồ thị và metadata. Đầu ra là xác suất node thuộc nhóm SARS positive, được dùng để xếp hạng trong chiến lược GNN.
+
+\begin{table}[H]
+\centering
+\caption{Đặc trưng đầu vào của Weighted GraphSAGE proxy}
+\label{tab:gnn_features}
+\begin{tabularx}{\textwidth}{L{4.5cm} Y L{3cm}}
+\toprule
+\textbf{Nhóm đặc trưng} & \textbf{Biến sử dụng} & \textbf{Kích thước}\\
+\midrule
+Cấu trúc đồ thị & Degree centrality, weighted degree, betweenness, closeness & 4 chiều\\
+Hành vi tiếp xúc & Ngủ cùng phòng với index case, được chăm sóc bởi index case & 2 chiều\\
+Nhân khẩu học & Nhóm tuổi (scaled), giới tính, site (Soweto/Klerksdorp) & 3 chiều\\
+Dịch tễ học & Susceptibility (huyết thanh học), vai trò index/contact & 2 chiều\\
+\midrule
+\textbf{Tổng cộng} & & \textbf{11 chiều}\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Bài toán budget-constrained top-\texorpdfstring{$k$}{k} selection}
+
+\begin{definition}[Budget-constrained node selection]
+Cho đồ thị $G=(V,E,W)$ và ngân sách $k \in (0,1)$, bài toán chọn tập can thiệp là tìm $S^* \subseteq V$ sao cho $|S^*| = \lfloor k|V| \rfloor$ và:
+\begin{equation}
+  S^* = \argmax_{S \subseteq V,\, |S|=\lfloor k|V|\rfloor} f(S, G),
+  \label{eq:topk}
+\end{equation}
+trong đó $f(S, G)$ là hàm đánh giá hiệu quả can thiệp (số cạnh transmission bị chặn, số ca nhiễm được ngăn, v.v.).
+\end{definition}
+
+Bài toán $f$ tổng quát là NP-hard \cite{kempe2003}, do đó CostTrace so sánh các heuristic thay vì tìm nghiệm tối ưu chính xác. Bốn chiến lược được thực nghiệm:
+\begin{enumerate}[label=(\arabic*), itemsep=4pt]
+  \item \textbf{Random}: chọn ngẫu nhiên $k|V|$ node; lặp 100 lần và lấy giá trị trung bình để ổn định hóa.
+  \item \textbf{Degree}: chọn $k|V|$ node có Degree Centrality cao nhất.
+  \item \textbf{Betweenness}: chọn $k|V|$ node có Betweenness Centrality cao nhất.
+  \item \textbf{GNN}: chọn $k|V|$ node có xác suất nhiễm cao nhất theo Weighted GraphSAGE proxy.
+\end{enumerate}
+Ba mức ngân sách được khảo sát: $k \in \{1\%, 5\%, 10\%\}$, tương ứng với 3, 17 và 34 node trong mạng 340 node.
+
+\section{Đánh giá hiệu quả can thiệp}
+
+\subsection{Counterfactual transmission analysis}
+
+Phân tích đối chứng sử dụng nhãn \textit{Transmission} thực tế ở cấp cạnh. Một cạnh transmission $(u,v)$ được xem là bị \textit{chặn} nếu $u \in S$ hoặc $v \in S$. Hai chỉ số chính được tính:
+\begin{align}
+  \text{Transmission coverage} &= \frac{|\{(u,v) \in E_T : u \in S \lor v \in S\}|}{|E_T|}, \label{eq:trans_coverage}\\
+  \text{Prevention rate} &= \frac{|\text{secondary infections prevented}|}{|\text{total secondary cases}|}, \label{eq:prevention_rate}
+\end{align}
+trong đó $E_T$ là tập cạnh có nhãn Transmission.
+
+\subsection{Mô phỏng SIR}
+
+Mô phỏng SIR được chạy trên từng household component. Mỗi hộ có index case làm seed nhiễm ban đầu. Các tham số được hiệu chỉnh từ dữ liệu SASHTS: tỷ lệ lây ($\beta = 0{,}25$) dựa trên attack rate trung bình 70,9\% phù hợp với biến thể Beta; tỷ lệ hồi phục ($\gamma = 0{,}10$) tương ứng R$_0 \approx 2{,}5$; thời gian mô phỏng $T = 30$ ngày. Xác suất lây qua mỗi cạnh được scale theo log-duration:
+\begin{equation}
+  p_{uv} = \min\!\left(\beta \cdot \frac{\ln(1 + w_{uv})}{\ln(1 + w_{\max})},\; 0{,}9\right),
+  \label{eq:sir_prob}
+\end{equation}
+để tránh xác suất tiệm cận 1 khi thời lượng tiếp xúc rất lớn. Mỗi kịch bản được chạy 50 lần Monte Carlo để lấy mean và độ lệch chuẩn.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\chapter{THỰC NGHIỆM VÀ KẾT QUẢ}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\section{Thiết lập thực nghiệm}
+
+Toàn bộ pipeline được tổ chức thành năm giai đoạn: \texttt{prepare} (kiểm định, làm sạch, dựng đồ thị), \texttt{metrics} (topology, centrality, community, risk score), \texttt{model} (huấn luyện GraphSAGE proxy), \texttt{budget} (top-k allocation, counterfactual, SIR, tổng hợp) và \texttt{reporting} (hình minh họa, báo cáo). Tất cả số liệu trong báo cáo được lấy trực tiếp từ các file trong \texttt{results/metrics}, \texttt{results/model} và \texttt{results/intervention}, bảo đảm tính tái lập bằng cách chạy lại pipeline với lệnh \verb|python main.py --phase all|.
+
+Môi trường thực nghiệm: Python 3.10+, NetworkX 3.x, PyTorch 2.x, scikit-learn, pandas, Matplotlib/Seaborn, Google Colab (GPU T4). Random seed cố định ở tất cả các bước ngẫu nhiên (seed = 42).
+
+\section{Kết quả topology và community detection}
+
+Bảng~\ref{tab:basic_metrics_results} trình bày các chỉ số topology cơ bản. Mạng SASHTS có cấu trúc đặc thù: toàn mạng thưa nhưng từng hộ gia đình rất dày. Đây là lý do phân tích theo component là cần thiết.
+
+\begin{table}[H]
+\centering
+\caption{Chỉ số mạng lưới cơ bản}
+\label{tab:basic_metrics_results}
+\begin{tabular}{L{7cm} C{4cm}}
+\toprule
+\textbf{Chỉ số} & \textbf{Giá trị}\\
+\midrule
+Nodes                               & 340\\
+Edges                               & 542\\
+Households / connected components   & 88\\
+Average household size              & 3,86\\
+Average household density           & 0,9633\\
+Average household diameter          & 1,17\\
+Average clustering coefficient      & 0,7994\\
+Overall SARS attack rate            & 70,88\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{components.png}
+\caption{Phân bố kích thước các household components trong mạng SASHTS. Hầu hết hộ có 3--4 thành viên; không có component nào vượt quá 8 node.}
+\label{fig:components}
 \end{figure}
 
-\begin{figure}[h]
+Louvain phát hiện đúng 88 communities với modularity đạt 0,9696 và agreement với nhãn hộ gia đình đạt 100\%. Kết quả này mang hai hàm ý. Thứ nhất, cấu trúc hộ gia đình là ranh giới cộng đồng rất mạnh trong dữ liệu này --- điều phù hợp với thực tế dịch tễ trong giai đoạn phong tỏa. Thứ hai, community detection trong dataset này chủ yếu đóng vai trò kiểm định cấu trúc thay vì phát hiện cộng đồng ẩn phức tạp; điều này cần được ghi nhận khi đánh giá đóng góp của bước này trong pipeline.
+
+\begin{table}[H]
 \centering
-\includegraphics[width=\linewidth]{../visualizations/chart_sir_baseline.png}
-\caption{Baseline SIR curve reconstructed from aggregate simulation summaries.}
+\caption{Kết quả Louvain community detection}
+\label{tab:community_results}
+\begin{tabular}{L{6cm} C{3.5cm} L{5cm}}
+\toprule
+\textbf{Chỉ số} & \textbf{Giá trị} & \textbf{Diễn giải}\\
+\midrule
+Thuật toán        & Louvain   & Tối ưu modularity có trọng số\\
+Trọng số cạnh     & \texttt{total\_duration\_sec} & Tổng thời lượng tiếp xúc\\
+Số community      & 88        & Trùng với số hộ gia đình\\
+Modularity        & 0,9696    & Cấu trúc cộng đồng rất rõ\\
+HH agreement      & 100,0\%   & Khôi phục hoàn toàn household structure\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{community.png}
+\caption{Kết quả Louvain: số community, modularity và agreement với household labels.}
+\label{fig:community}
 \end{figure}
 
-\section{Conclusion and Future Work}
-Phase 05 confirms that learned risk ranking is the most effective intervention rule in this repository's current experiments. The GNN strategy is especially valuable when budget is at least 5\%, while degree remains a competitive lightweight baseline. Limitations include the small household-level graph, a static rather than temporal graph representation, and an SIR model that does not yet filter recovered nodes before candidate selection. Future work should add recovery-aware top-$k$ filtering, dynamic temporal contacts, spatiotemporal features, and online intervention updates as new cases arrive.
+\section{Kết quả centrality và composite risk score}
 
-\bibliographystyle{IEEEtran}
-\begin{thebibliography}{1}
-\bibitem{graphsage} W. Hamilton, Z. Ying, and J. Leskovec, ``Inductive representation learning on large graphs,'' NeurIPS, 2017.
-\bibitem{epidemics} I. Kiss, J. Miller, and P. Simon, \emph{Mathematics of Epidemics on Networks}, Springer, 2017.
-\bibitem{deeptrace} C. W. Tan, P. D. Yu, S. Chen, and H. V. Poor, ``DeepTrace: Learning to optimize contact tracing in epidemic networks with graph neural networks,'' 2025.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{centrality.png}
+\caption{Tương quan và phân bố các chỉ số centrality theo household component.}
+\label{fig:centrality}
+\end{figure}
+
+Các chỉ số centrality cho phép mô tả vai trò của từng node. Degree phản ánh số người tiếp xúc trực tiếp, weighted degree phản ánh cường độ tiếp xúc tích lũy, betweenness phản ánh vai trò trung gian và closeness phản ánh mức gần trung bình. Composite risk score được xây dựng từ kết hợp có trọng số các chỉ số đã chuẩn hóa (degree, weighted degree, betweenness, sleep\_room\_ix), đây là heuristic có khả năng diễn giải cao dùng để so sánh với GNN score.
+
+\begin{longtable}{L{2.0cm} L{1.6cm} L{2.2cm} L{1.8cm} C{1.2cm} C{2.2cm} C{2.2cm} C{1.8cm}}
+\caption{Top 15 node theo composite risk score}
+\label{tab:top15_risk}\\
+\toprule
+\textbf{Node} & \textbf{HH} & \textbf{Site} & \textbf{SARS} & \textbf{Deg.} & \textbf{Wtd. degree} & \textbf{Betw.} & \textbf{Risk}\\
+\midrule
+\endfirsthead
+\multicolumn{8}{c}{\small\itshape (tiếp theo Bảng~\ref{tab:top15_risk})}\\
+\toprule
+\textbf{Node} & \textbf{HH} & \textbf{Site} & \textbf{SARS} & \textbf{Deg.} & \textbf{Wtd. degree} & \textbf{Betw.} & \textbf{Risk}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+S005-003 & S005 & Soweto      & Negative & 2 & 154.440 & 1,000 & 0,8449\\
+J008-004 & J008 & Klerksdorp  & Positive & 5 & 275.360 & 0,000 & 0,7585\\
+J063-004 & J063 & Klerksdorp  & Positive & 4 &  51.080 & 1,000 & 0,7479\\
+S005-002 & S005 & Soweto      & Negative & 2 & 246.280 & 0,000 & 0,7312\\
+S008-002 & S008 & Soweto      & Negative & 2 &  27.120 & 1,000 & 0,7254\\
+S036-002 & S036 & Soweto      & Positive & 3 &  17.040 & 1,000 & 0,7159\\
+J008-005 & J008 & Klerksdorp  & Positive & 5 & 112.040 & 0,500 & 0,7051\\
+S004-002 & S004 & Soweto      & Negative & 2 &   3.040 & 1,000 & 0,7028\\
+J073-002 & J073 & Klerksdorp  & Positive & 2 &   2.800 & 1,000 & 0,7026\\
+S018-005 & S018 & Soweto      & Positive & 3 &  73.200 & 0,667 & 0,7020\\
+S040-002 & S040 & Soweto      & Positive & 3 &   1.360 & 1,000 & 0,7012\\
+J043-006 & J043 & Klerksdorp  & Positive & 5 & 284.160 & 0,400 & 0,6967\\
+S028-002 & S028 & Soweto      & Negative & 4 & 195.080 & 0,000 & 0,6831\\
+J008-006 & J008 & Klerksdorp  & Positive & 5 & 192.520 & 0,000 & 0,6807\\
+S011-004 & S011 & Soweto      & Negative & 4 & 191.120 & 0,000 & 0,6794\\
+\end{longtable}
+
+\section{Kết quả mô hình GraphSAGE proxy}
+
+Weighted GraphSAGE proxy được huấn luyện trong 500 epochs với early stopping dựa trên validation AUC; best epoch là 150; threshold tối ưu trên validation là 0,24.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả đánh giá Weighted GraphSAGE proxy theo tập dữ liệu}
+\label{tab:gnn_results}
+\begin{tabular}{L{3cm} C{2cm} C{2cm} C{2cm} C{2cm} C{2cm}}
+\toprule
+\textbf{Tập dữ liệu} & \textbf{AUC-ROC} & \textbf{Avg.Prec} & \textbf{F1} & \textbf{Precision} & \textbf{Recall}\\
+\midrule
+Train      & 0,9914 & 0,9966 & 0,9619 & 0,9480 & 0,9762\\
+Validation & 0,8036 & 0,9162 & 0,8732 & 0,8857 & 0,8611\\
+Test       & 0,7669 & 0,8995 & 0,8158 & 0,7949 & 0,8378\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Khoảng cách giữa train AUC (0,9914) và test AUC (0,7669) cho thấy nguy cơ overfitting do kích thước dataset nhỏ (340 node). Tuy nhiên, test Average Precision đạt 0,8995 phản ánh khả năng ranking của mô hình vẫn tốt ở mức độ ứng dụng chọn top-k. Trong bối cảnh can thiệp, ranking quan trọng hơn nhãn nhị phân tuyệt đối; do đó GNN score được dùng để chọn top-k node thay vì dựa trên predicted class.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{model.png}
+\caption{Tóm tắt hiệu năng mô hình GraphSAGE proxy: train, validation và test theo các chỉ số đánh giá.}
+\label{fig:model}
+\end{figure}
+
+\section{Kết quả Top-\texorpdfstring{$k$}{k} budget selection}
+
+\begin{longtable}{C{1.3cm} C{1.4cm} L{2.4cm} C{2.0cm} C{2.0cm} C{2.4cm} C{2.4cm}}
+\caption{Kết quả Top-$k$ node selection theo ngân sách}
+\label{tab:topk}\\
+\toprule
+\textbf{$k$} & \textbf{Nodes} & \textbf{Strategy} & \textbf{Prec@$k$} & \textbf{Recall@$k$} & \textbf{Trans. cov.} & \textbf{Dur. cov.}\\
+\midrule
+\endfirsthead
+\multicolumn{7}{c}{\small\itshape (tiếp theo Bảng~\ref{tab:topk})}\\
+\toprule
+\textbf{$k$} & \textbf{Nodes} & \textbf{Strategy} & \textbf{Prec@$k$} & \textbf{Recall@$k$} & \textbf{Trans. cov.} & \textbf{Dur. cov.}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1\%  & 3  & Random       & 71,7\%  & 0,9\%  & 1,7\%  & 1,8\%\\
+1\%  & 3  & Degree       & 100,0\% & 1,2\%  & 2,4\%  & 11,5\%\\
+1\%  & 3  & Betweenness  & 66,7\%  & 0,8\%  & 0,3\%  & 4,0\%\\
+1\%  & 3  & GNN          & 100,0\% & 1,2\%  & 2,1\%  & 7,6\%\\
+5\%  & 17 & Random       & 70,8\%  & 5,0\%  & 9,7\%  & 9,6\%\\
+5\%  & 17 & Degree       & 64,7\%  & 4,6\%  & 8,4\%  & 38,8\%\\
+5\%  & 17 & Betweenness  & 64,7\%  & 4,6\%  & 6,3\%  & 7,0\%\\
+5\%  & 17 & GNN          & 100,0\% & 7,1\%  & 14,3\% & 15,2\%\\
+10\% & 34 & Random       & 70,7\%  & 10,0\% & 19,2\% & 19,0\%\\
+10\% & 34 & Degree       & 64,7\%  & 9,1\%  & 17,1\% & 56,9\%\\
+10\% & 34 & Betweenness  & 70,6\%  & 10,0\% & 16,4\% & 8,3\%\\
+10\% & 34 & GNN          & 100,0\% & 14,1\% & 26,2\% & 17,3\%\\
+\end{longtable}
+
+GNN đạt Precision@$k$ = 100\% ở cả ba mức ngân sách, cho thấy tất cả node được chọn đều thực sự là SARS positive. Tuy nhiên, Transmission coverage mới là chỉ số quyết định hiệu quả can thiệp: ở $k=1\%$, Degree có coverage 2,4\% so với GNN 2,1\%; ở $k=5\%$ và $10\%$, GNN đạt lần lượt 14,3\% và 26,2\%, vượt các baseline còn lại.
+
+\section{Counterfactual transmission analysis}
+
+Phân tích đối chứng sử dụng trực tiếp nhãn transmission quan sát được --- điểm mạnh của SASHTS so với các bộ dữ liệu chỉ có cấu trúc đồ thị.
+
+\begin{longtable}{C{1.3cm} C{1.4cm} L{2.3cm} C{2.4cm} C{2.4cm} C{2.7cm} C{2.0cm}}
+\caption{Kết quả counterfactual transmission analysis}
+\label{tab:counterfactual}\\
+\toprule
+\textbf{$k$} & \textbf{Nodes} & \textbf{Strategy} & \textbf{Trans. blocked} & \textbf{Block rate} & \textbf{Infect. prevented} & \textbf{Prev. rate}\\
+\midrule
+\endfirsthead
+\multicolumn{7}{c}{\small\itshape (tiếp theo Bảng~\ref{tab:counterfactual})}\\
+\toprule
+\textbf{$k$} & \textbf{Nodes} & \textbf{Strategy} & \textbf{Trans. blocked} & \textbf{Block rate} & \textbf{Infect. prevented} & \textbf{Prev. rate}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1\%  & 3  & Degree      & 7,0  & 2,4\%  & 7,0  & 4,6\%\\
+1\%  & 3  & GNN         & 6,0  & 2,1\%  & 6,0  & 3,9\%\\
+1\%  & 3  & Random      & 4,97 & 1,7\%  & 4,99 & 3,3\%\\
+1\%  & 3  & Betweenness & 1,0  & 0,3\%  & 1,0  & 0,7\%\\
+5\%  & 17 & GNN         & 41,0 & 14,3\% & 41,0 & 26,8\%\\
+5\%  & 17 & Random      & 27,73& 9,7\%  & 26,68& 17,4\%\\
+5\%  & 17 & Betweenness & 18,0 & 6,3\%  & 18,0 & 11,8\%\\
+5\%  & 17 & Degree      & 24,0 & 8,4\%  & 16,0 & 10,5\%\\
+10\% & 34 & GNN         & 75,0 & 26,2\% & 75,0 & 49,0\%\\
+10\% & 34 & Random      & 54,84& 19,2\% & 50,46& 33,0\%\\
+10\% & 34 & Betweenness & 47,0 & 16,4\% & 47,0 & 30,7\%\\
+10\% & 34 & Degree      & 49,0 & 17,1\% & 34,0 & 22,2\%\\
+\end{longtable}
+
+Tại $k=1\%$, Degree thắng counterfactual với prevention rate 4,6\% so với GNN 3,9\%. Điều này xảy ra vì các node degree cao nhất trong household có khả năng bao phủ trực tiếp nhiều cạnh transmission ngắn hơn. Khi $k$ tăng lên 5\% và 10\%, GNN vượt trội vì có thể khai thác đồng thời nhiều tín hiệu rủi ro: cấu trúc tiếp xúc, thời lượng, hành vi liên quan đến index case và metadata dịch tễ.
+
+\section{Kết quả mô phỏng SIR}
+
+\begin{longtable}{C{1.3cm} L{2.3cm} C{3.0cm} C{3.0cm} C{3.0cm}}
+\caption{Kết quả SIR simulation theo chiến lược can thiệp}
+\label{tab:sir}\\
+\toprule
+\textbf{$k$} & \textbf{Strategy} & \textbf{Mean infected/HH} & \textbf{Std.\ dev.} & \textbf{Reduction}\\
+\midrule
+\endfirsthead
+\multicolumn{5}{c}{\small\itshape (tiếp theo Bảng~\ref{tab:sir})}\\
+\toprule
+\textbf{$k$} & \textbf{Strategy} & \textbf{Mean infected/HH} & \textbf{Std.\ dev.} & \textbf{Reduction}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{2}{l}{\textit{Baseline (no intervention)}} & 3,4214 & 1,6438 & ---\\
+\midrule
+1\%  & Random      & 3,38 & 1,66 &  1,2\%\\
+1\%  & Degree      & 3,35 & 1,68 &  2,0\%\\
+1\%  & Betweenness & 3,39 & 1,71 &  1,0\%\\
+1\%  & GNN         & 3,29 & 1,71 &  3,8\%\\
+5\%  & Random      & 3,16 & 1,70 &  7,6\%\\
+5\%  & Degree      & 3,19 & 1,66 &  6,6\%\\
+5\%  & Betweenness & 3,12 & 1,81 &  8,9\%\\
+5\%  & GNN         & 2,66 & 1,95 & 22,2\%\\
+10\% & Random      & 2,85 & 1,74 & 16,8\%\\
+10\% & Degree      & 2,92 & 1,67 & 14,6\%\\
+10\% & Betweenness & 2,72 & 1,84 & 20,4\%\\
+10\% & GNN         & 1,96 & 2,01 & 42,7\%\\
+\end{longtable}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{chart_sir_baseline.png}
+\caption{Đường cong SIR baseline trung bình qua 50 Monte Carlo runs, với khoảng tin cậy $\pm 1$ độ lệch chuẩn.}
+\label{fig:sir_baseline}
+\end{figure}
+
+GNN là chiến lược có SIR reduction cao nhất ở cả ba mức ngân sách. Tại $k=10\%$, reduction đạt 42,7\% --- gần gấp đôi so với Betweenness (20,4\%) và Degree (14,6\%). Độ lệch chuẩn tăng theo k do khi loại bỏ nhiều node, các household run trở nên bất ổn hơn (một số household có thể hết người để lây).
+
+\section{Diễn giải tổng hợp theo ngân sách}
+
+Kết quả tại $k=1\%$ cho thấy ngân sách cực thấp làm bài toán trở nên nhạy cảm với từng node được chọn (chỉ 3 node). Trong điều kiện này, Degree thắng theo counterfactual vì trong household nhỏ, node nhiều kết nối nhất thường là trung tâm lây truyền của hộ. Đây là lợi thế của chỉ số đơn giản nhưng sát với cơ chế lây trực tiếp.
+
+Ở $k=5\%$ và $k=10\%$, GNN vượt trội vì khai thác đồng thời nhiều chiều tín hiệu. Khi ngân sách đủ lớn để chọn nhiều node, ranking đa đặc trưng có cơ hội sửa sai cho các trường hợp mà một chỉ số centrality đơn lẻ bỏ sót. Kết luận quan trọng là không có một chiến lược thống trị tuyệt đối ở mọi mức ngân sách: sự lựa chọn phụ thuộc vào cả mức ngân sách lẫn đặc trưng cấu trúc của mạng lưới.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\chapter{TRỰC QUAN HÓA VÀ DIỄN GIẢI}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\section{Network overview}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{network_overview.png}
+\caption{Contact network overview: kích thước node theo Degree Centrality, màu theo household community, node màu đỏ là top-risk nodes theo composite score.}
+\label{fig:network_overview}
+\end{figure}
+
+Hình~\ref{fig:network_overview} trình bày mạng tiếp xúc tổng thể. Vì đồ thị gồm 88 household components nhỏ, hình ảnh thể hiện sự phân tách thành các cụm riêng biệt thay vì một giant component. Trực quan hóa này củng cố lập luận rằng việc giữ tất cả household components là hợp lý: nếu chỉ giữ LCC, phần lớn cụm hộ sẽ biến mất và kết quả sẽ thiên lệch về một vài household lớn.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{network.png}
+\caption{Topology view sinh từ pipeline phân tích mạng, nhấn mạnh cấu trúc component rời rạc và mật độ liên kết nội bộ của các hộ gia đình.}
+\label{fig:network_topology}
+\end{figure}
+
+Hình~\ref{fig:network_topology} bổ sung góc nhìn topology-level từ artifact trong \texttt{results/figures/topology/}. So với network overview ở Hình~\ref{fig:network_overview}, hình này phù hợp để kiểm tra trực quan quá trình xây dựng graph sau tiền xử lý: node không tạo thành một khối duy nhất mà phân bố thành nhiều component nhỏ, đúng với giả định household contact network.
+
+\section{Phân phối degree}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{chart_degree_distribution.png}
+\caption{Phân phối degree trong mạng lưới tiếp xúc theo household size constraints.}
+\label{fig:degree_dist}
+\end{figure}
+
+Phân phối degree (Hình~\ref{fig:degree_dist}) không có tail rất dài như các scale-free networks điển hình \cite{barabasi1999}. Điều này phù hợp với cấu trúc hộ gia đình: kích thước component 2--8 node giới hạn degree tối đa. Khái niệm ``superspreader'' trong báo cáo cần được hiểu ở phạm vi household contact network, không phải superspreader trong mạng xã hội đô thị quy mô lớn.
+
+\section{Heatmap so sánh chiến lược can thiệp}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{chart_heatmap.png}
+\caption{Heatmap so sánh prevention rate (\%) theo chiến lược can thiệp và mức ngân sách, dựa trên counterfactual evaluation.}
+\label{fig:heatmap}
+\end{figure}
+
+Heatmap (Hình~\ref{fig:heatmap}) là hình kết quả chính của báo cáo. Sự khác biệt giữa các chiến lược mang tính phi tuyến theo ngân sách: khi tăng từ 1\% lên 10\%, GNN không chỉ tăng hiệu quả theo tỷ lệ số node mà còn tăng nhanh hơn các baseline, củng cố lập luận rằng mô hình học trên đồ thị có giá trị khi bài toán cho phép khai thác nhiều node theo rủi ro tổng hợp.
+
+\section{Biểu đồ grouped bar so sánh reduction}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{chart_reduction_by_strategy.png}
+\caption{Grouped bar chart so sánh SIR reduction (\%) theo chiến lược và mức ngân sách.}
+\label{fig:grouped_bar}
+\end{figure}
+
+Ở $k=5\%$, GNN vượt Betweenness và Random theo SIR reduction rõ ràng (22,2\% so với 8,9\% và 7,6\%). Ở $k=10\%$, khoảng cách này tăng thêm. Ngược lại, ở $k=1\%$, chênh lệch giữa các chiến lược rất nhỏ, phản ánh tính bất ổn khi ngân sách quá hạn chế.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{comparison.png}
+\caption{Artifact so sánh tổng hợp các chiến lược can thiệp theo ngân sách, sinh từ pipeline intervention trong \texttt{results/figures/intervention/}.}
+\label{fig:intervention_comparison}
+\end{figure}
+
+Hình~\ref{fig:intervention_comparison} đóng vai trò kiểm tra chéo với Bảng~\ref{tab:final_comparison}: xu hướng chính vẫn nhất quán, trong đó Degree cạnh tranh tốt ở ngân sách 1\%, còn GNN trở thành lựa chọn vượt trội khi ngân sách đạt 5\% và 10\%.
+
+\section{Overlap giữa các chiến lược và khuyến nghị}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{overlap.png}
+\caption{Mức độ giao nhau giữa tập node được chọn bởi từng chiến lược theo mức ngân sách.}
+\label{fig:overlap}
+\end{figure}
+
+Phân tích overlap (Hình~\ref{fig:overlap}) cho thấy Degree và GNN có xu hướng chọn nhiều node chung hơn so với Betweenness --- phản ánh rằng cả hai đều ưu tiên node có ảnh hưởng trực tiếp, trong khi Betweenness ưu tiên node trung gian có thể nằm trong các household với ít transmission thực tế.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{recommendation.png}
+\caption{Khuyến nghị chiến lược theo mức ngân sách dựa trên tổng hợp counterfactual và SIR.}
+\label{fig:recommendation}
+\end{figure}
+
+Từ góc độ khuyến nghị thực tiễn (Hình~\ref{fig:recommendation}): nếu ngân sách cực thấp ($k \leq 1\%$) và yêu cầu tính giải thích được (explainability), Degree là lựa chọn hợp lý; nếu ngân sách từ 5\% trở lên, GNN nên được ưu tiên vì cho kết quả vượt trội trên cả hai lớp đánh giá.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\chapter{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\section{Tổng kết}
+
+Đề tài CostTrace đã xây dựng và thực nghiệm một pipeline nghiên cứu hoàn chỉnh cho bài toán can thiệp dịch tễ có ràng buộc ngân sách trên mạng lưới tiếp xúc thực tế. Từ dữ liệu SASHTS, nhóm xây dựng đồ thị vô hướng có trọng số, phân tích topology và centrality, phát hiện cộng đồng bằng Louvain, huấn luyện Weighted GraphSAGE proxy, và đánh giá bốn chiến lược top-$k$ bằng hai lớp metric độc lập.
+
+Ba kết quả chính cần được ghi nhận. Thứ nhất, Louvain phát hiện đúng 88 communities với modularity 0,9696 và agreement 100\%, xác nhận cấu trúc hộ gia đình là ranh giới cộng đồng rất mạnh. Thứ hai, GraphSAGE proxy đạt test AUC 0,7669 và AP 0,8995, cho thấy mô hình học được tín hiệu rủi ro từ kết hợp cấu trúc đồ thị và metadata. Thứ ba, không có một chiến lược can thiệp thống trị tuyệt đối: tại $k=1\%$, Degree tốt nhất theo counterfactual (prevention rate 4,6\%); tại $k=5\%$ và $k=10\%$, GNN vượt trội với prevention rate 26,8\% và 49,0\%.
+
+\section{Hạn chế}
+
+\paragraph{Quy mô dataset.} SASHTS là dữ liệu hộ gia đình với 340 cá nhân; kết quả không thể khái quát trực tiếp sang mạng tiếp xúc đô thị quy mô lớn hay mạng xã hội có cross-community edges.
+
+\paragraph{Static graph.} Đồ thị hiện tại là static weighted contact graph. Timestamp chỉ đầy đủ cho Soweto; Klerksdorp sử dụng timestamp giả, nên báo cáo không tuyên bố đã xây dựng temporal graph hoàn chỉnh.
+
+\paragraph{Mô hình GNN lightweight.} Weighted GraphSAGE proxy được triển khai bằng pure PyTorch để phù hợp với môi trường đồ án; đây không phải bản tái hiện đầy đủ DeepTrace. Khoảng cách train-test AUC cho thấy nguy cơ overfitting cần được xử lý khi scale lên dataset lớn hơn.
+
+\paragraph{SIR đơn giản.} Mô phỏng SIR dùng tham số cố định; chưa tích hợp giai đoạn ủ bệnh (SEIR), không lọc node đã recovered khỏi candidate list, và xác suất lây chỉ scale theo log-duration thay vì mô hình xác suất lây truyền thực nghiệm.
+
+\section{Hướng phát triển}
+
+\paragraph{Temporal contact graph.} Mở rộng từ static graph sang temporal graph theo time-window, cho phép phân tích hiệu quả can thiệp sớm so với can thiệp muộn trong chuỗi lây truyền.
+
+\paragraph{Recovery-aware intervention.} Bổ sung bộ lọc loại bỏ node đã recovered khỏi danh sách ứng viên can thiệp, tránh lãng phí ngân sách vào những người không còn khả năng lây.
+
+\paragraph{Spatiotemporal modeling.} Tích hợp thông tin không gian địa lý (vị trí hộ gia đình) và thời gian (ngày phát hiện ca bệnh) để xây dựng mô hình dự đoán rủi ro có yếu tố không gian-thời gian.
+
+\paragraph{Validation trên dataset đa dạng hơn.} Thực nghiệm trên các bộ dữ liệu mạng tiếp xúc lớn hơn (trường học, bệnh viện, không gian công cộng) để kiểm tra tính tổng quát của kết luận về trade-off giữa Degree và GNN theo mức ngân sách.
+
+\paragraph{Online intervention system.} Phát triển thành hệ thống cập nhật real-time: khi dữ liệu tiếp xúc mới được thu thập, mô hình tính lại risk score và cập nhật khuyến nghị can thiệp. Tuy nhiên, mọi triển khai thực tế cần kiểm định bởi chuyên gia dịch tễ và tuân thủ yêu cầu đạo đức bảo vệ dữ liệu cá nhân.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+%% REFERENCES
+%%═══════════════════════════════════════════════════════════════════════════════
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{TÀI LIỆU THAM KHẢO}
+\begin{thebibliography}{99}
+\setlength{\itemsep}{6pt}
+
+  \bibitem{deepTrace2025}
+    C.~W.~Tan, P.-D.~Yu, S.~Chen, and H.~V.~Poor,
+    ``DeepTrace: Learning to optimize contact tracing in epidemic networks with graph neural networks,''
+    \textit{arXiv preprint arXiv:2211.00880v4}, 2025.
+
+  \bibitem{graphsage2017}
+    W.~L.~Hamilton, Z.~Ying, and J.~Leskovec,
+    ``Inductive representation learning on large graphs,''
+    in \textit{Advances in Neural Information Processing Systems (NeurIPS)},
+    vol.~30, 2017.
+
+  \bibitem{louvain2008}
+    V.~D.~Blondel, J.-L.~Guillaume, R.~Lambiotte, and E.~Lefebvre,
+    ``Fast unfolding of communities in large networks,''
+    \textit{Journal of Statistical Mechanics: Theory and Experiment},
+    vol.~2008, no.~10, p.~P10008, 2008.
+
+  \bibitem{newman2006}
+    M.~E.~J.~Newman,
+    ``Modularity and community structure in networks,''
+    \textit{Proceedings of the National Academy of Sciences},
+    vol.~103, no.~23, pp.~8577--8582, 2006.
+
+  \bibitem{freeman1977}
+    L.~C.~Freeman,
+    ``A set of measures of centrality based on betweenness,''
+    \textit{Sociometry}, vol.~40, no.~1, pp.~35--41, 1977.
+
+  \bibitem{kermack1927}
+    W.~O.~Kermack and A.~G.~McKendrick,
+    ``A contribution to the mathematical theory of epidemics,''
+    \textit{Proceedings of the Royal Society of London. Series~A},
+    vol.~115, no.~772, pp.~700--721, 1927.
+
+  \bibitem{keeling2005}
+    M.~J.~Keeling and K.~T.~D.~Eames,
+    ``Networks and epidemic models,''
+    \textit{Journal of the Royal Society Interface},
+    vol.~2, no.~4, pp.~295--307, 2005.
+
+  \bibitem{watts1998}
+    D.~J.~Watts and S.~H.~Strogatz,
+    ``Collective dynamics of `small-world' networks,''
+    \textit{Nature}, vol.~393, pp.~440--442, 1998.
+
+  \bibitem{barabasi1999}
+    A.-L.~Barabási and R.~Albert,
+    ``Emergence of scaling in random networks,''
+    \textit{Science}, vol.~286, no.~5439, pp.~509--512, 1999.
+
+  \bibitem{pastorSatorras2001}
+    R.~Pastor-Satorras and A.~Vespignani,
+    ``Epidemic spreading in scale-free networks,''
+    \textit{Physical Review Letters}, vol.~86, no.~14, pp.~3200--3203, 2001.
+
+  \bibitem{kojaku2021}
+    S.~Kojaku, L.~Hébert-Dufresne, E.~Mones, S.~Lehmann, and Y.-Y.~Ahn,
+    ``The effectiveness of backward contact tracing in networks,''
+    \textit{Nature Physics}, vol.~17, no.~5, pp.~652--658, 2021.
+
+  \bibitem{cencetti2021}
+    G.~Cencetti, G.~Santin, A.~Longa, E.~Pigani, A.~Barrat, C.~Cattuto,
+    S.~Lehmann, M.~Salathe, and B.~Lepri,
+    ``Digital proximity tracing on empirical contact networks for pandemic control,''
+    \textit{Nature Communications}, vol.~12, no.~1, p.~1655, 2021.
+
+  \bibitem{bradshaw2021}
+    W.~J.~Bradshaw, E.~C.~Alley, J.~H.~Huggins, A.~L.~Lloyd, and K.~M.~Esvelt,
+    ``Bidirectional contact tracing could dramatically improve COVID-19 control,''
+    \textit{Nature Communications}, vol.~12, no.~1, p.~232, 2021.
+
+  \bibitem{adam2020}
+    D.~C.~Adam \textit{et al.},
+    ``Clustering and superspreading potential of SARS-CoV-2 infections in Hong Kong,''
+    \textit{Nature Medicine}, vol.~26, no.~11, pp.~1714--1719, 2020.
+
+  \bibitem{sashts2021}
+    J.~Kleynhans \textit{et al.},
+    ``SARS-CoV-2 household transmission study (SASHTS): physical proximity contact sensor data and epidemiological outcomes,''
+    South Africa, 2020--2021. Dataset accessed for academic research.
+
+  \bibitem{girvanNewman2002}
+    M.~Girvan and M.~E.~J.~Newman,
+    ``Community structure in social and biological networks,''
+    \textit{Proceedings of the National Academy of Sciences},
+    vol.~99, no.~12, pp.~7821--7826, 2002.
+
+  \bibitem{kempe2003}
+    D.~Kempe, J.~Kleinberg, and É.~Tardos,
+    ``Maximizing the spread of influence through a social network,''
+    in \textit{Proceedings of the 9th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+    pp.~137--146, 2003.
+
+  \bibitem{kipf2017}
+    T.~N.~Kipf and M.~Welling,
+    ``Semi-supervised classification with graph convolutional networks,''
+    in \textit{Proceedings of the International Conference on Learning Representations (ICLR)}, 2017.
+
+  \bibitem{kiss2017}
+    I.~Z.~Kiss, J.~C.~Miller, and P.~L.~Simon,
+    \textit{Mathematics of Epidemics on Networks: From Exact to Approximate Models}.
+    Springer, 2017.
+
+  \bibitem{bengio2021}
+    Y.~Bengio, P.~Gupta, T.~Maharaj, N.~Rahaman \textit{et al.},
+    ``Predicting infectiousness for proactive contact tracing,''
+    in \textit{Proceedings of the International Conference on Learning Representations (ICLR)}, 2021.
+
 \end{thebibliography}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+%% APPENDICES
+%%═══════════════════════════════════════════════════════════════════════════════
+\appendix
+
+\chapter{PIPELINE VÀ ARTIFACT}
+\label{appendix:pipeline}
+
+\section{Kiến trúc pipeline}
+
+\begin{table}[H]
+\centering
+\caption{Các giai đoạn chính của pipeline CostTrace}
+\label{tab:pipeline}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\textwidth}{L{2.0cm} L{4.2cm} Y}
+\toprule
+\textbf{Giai đoạn} & \textbf{Script chính} & \textbf{Đầu ra}\\
+\midrule
+\texttt{prepare} &
+\pathcell{00_verify.py}\par
+\pathcell{01_clean.py}\par
+\pathcell{02_build_graph.py}\par
+\pathcell{03_eda.py} &
+\pathcell{graph.pkl}; \pathcell{edgelist.csv}; \pathcell{nodelist.csv}; \pathcell{eda_summary.json}\\[5pt]
+\texttt{metrics} &
+\pathcell{04_basic_metrics.py}\par
+\pathcell{05_centrality.py}\par
+\pathcell{06_community.py}\par
+\pathcell{07_risk_score.py} &
+\pathcell{basic_metrics.json}; \pathcell{centrality_scores.csv}; \pathcell{community_assignments.csv}; \pathcell{node_scores.csv}\\[5pt]
+\texttt{model} &
+\pathcell{08_gnn_model.py} &
+\pathcell{gnn_best.pt}; \pathcell{gnn_risk_scores.csv}; \pathcell{gnn_metrics.json}\\[5pt]
+\texttt{budget} &
+\pathcell{09_topk_budget.py}\par
+\pathcell{10_counterfactual.py}\par
+\pathcell{11_sir_simulation.py}\par
+\pathcell{12_summary.py} &
+\pathcell{topk_budget_results.csv}; \pathcell{counterfactual_results.csv}; \pathcell{sir_results.csv}; \pathcell{final_comparison.csv}\\[5pt]
+\texttt{reporting} &
+\pathcell{15_charts.py}\par
+\pathcell{16_network_viz.py} &
+Hình minh họa trong \pathcell{visualizations/} và \pathcell{results/figures/}\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Danh mục artifact chính}
+
+\begingroup
+\small
+\begin{longtable}{L{6.7cm} Y}
+\caption{Artifact sử dụng trong báo cáo}
+\label{tab:artifacts}\\
+\toprule
+\textbf{Artifact} & \textbf{Vai trò}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Artifact} & \textbf{Vai trò}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\pathcell{data/processed/graph.pkl} & Đồ thị NetworkX sau tiền xử lý\\
+\pathcell{results/metrics/basic_metrics.json} & Thống kê topology cơ bản\\
+\pathcell{results/metrics/community_metrics.json} & Kết quả Louvain và modularity\\
+\pathcell{results/metrics/node_scores.csv} & Centrality và composite risk score\\
+\pathcell{results/model/gnn_metrics.json} & Kết quả train/validation/test GNN\\
+\pathcell{results/model/gnn_risk_scores.csv} & Xác suất nhiễm theo GNN cho 340 node\\
+\pathcell{results/intervention/topk_budget_results.csv} & Precision, recall, coverage theo chiến lược\\
+\pathcell{results/intervention/counterfactual_results.csv} & Blocked transmissions và prevention rate\\
+\pathcell{results/intervention/sir_results.csv} & SIR reduction theo chiến lược và ngân sách\\
+\pathcell{results/intervention/final_comparison.csv} & Bảng tổng hợp cuối cùng\\
+\pathcell{visualizations/network_overview.png} & Hình mạng tổng thể\\
+\pathcell{visualizations/chart_degree_distribution.png} & Phân phối degree của contact graph\\
+\pathcell{visualizations/chart_heatmap.png} & Heatmap kết quả chính\\
+\pathcell{visualizations/chart_reduction_by_strategy.png} & Grouped bar chart so sánh chiến lược\\
+\pathcell{visualizations/chart_sir_baseline.png} & Đường cong SIR baseline\\
+\pathcell{results/figures/topology/network.png} & Hình topology-level của contact network\\
+\pathcell{results/figures/topology/components.png} & Phân tích connected components\\
+\pathcell{results/figures/topology/community.png} & Kết quả Louvain community detection\\
+\pathcell{results/figures/topology/centrality.png} & So sánh các chỉ số centrality\\
+\pathcell{results/figures/intervention/model.png} & Kết quả đánh giá mô hình GNN proxy\\
+\pathcell{results/figures/intervention/comparison.png} & So sánh tổng hợp các chiến lược can thiệp\\
+\pathcell{results/figures/intervention/overlap.png} & Overlap giữa các tập node được chọn\\
+\pathcell{results/figures/intervention/recommendation.png} & Khuyến nghị chiến lược theo ngân sách\\
+\end{longtable}
+\endgroup
+
+\section{Tái lập thực nghiệm}
+
+Các kết quả trong báo cáo có thể được tái tạo bằng lệnh:
+\begin{lstlisting}[language=bash, caption=Lệnh chạy toàn bộ pipeline CostTrace]
+# Cài đặt dependencies
+pip install -r requirements.txt
+
+# Chạy toàn bộ pipeline
+python main.py --phase all
+
+# Hoặc chạy từng giai đoạn
+python main.py --phase prepare
+python main.py --phase metrics
+python main.py --phase model
+python main.py --phase budget
+python main.py --phase reporting
+\end{lstlisting}
+
+Do mô hình GNN và mô phỏng SIR sử dụng seed cố định (\texttt{seed=42}), kết quả có tính ổn định trong cùng môi trường thư viện. Các sai khác nhỏ có thể xuất hiện nếu phiên bản thư viện thay đổi, nhưng không làm thay đổi kết luận chính nếu pipeline và seed được giữ nguyên.
+
+
+\chapter{ĐẶC TRƯNG ĐẦU VÀO VÀ MÃ HÓA BIẾN}
+\label{appendix:features}
+
+\section{Mô tả chi tiết 11 đặc trưng đầu vào GNN}
+
+\begin{longtable}{L{3.2cm} L{3.2cm} L{2.0cm} Y}
+\caption{Chi tiết mã hóa đặc trưng đầu vào Weighted GraphSAGE proxy}
+\label{tab:feature_encoding}\\
+\toprule
+\textbf{Tên biến gốc} & \textbf{Tên feature} & \textbf{Kiểu} & \textbf{Mô tả và cách chuẩn hóa}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tên biến gốc} & \textbf{Tên feature} & \textbf{Kiểu} & \textbf{Mô tả và cách chuẩn hóa}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{degree\_centrality} & \texttt{dc\_norm} & Liên tục & Degree Centrality tính trong household component, chuẩn hóa Min-Max về $[0,1]$\\[4pt]
+\texttt{weighted\_degree} & \texttt{wd\_norm} & Liên tục & Tổng \texttt{duration\_sec} của các cạnh kề, chuẩn hóa Min-Max\\[4pt]
+\texttt{betweenness} & \texttt{bc\_norm} & Liên tục & Betweenness Centrality trong component, chuẩn hóa Min-Max\\[4pt]
+\texttt{closeness} & \texttt{cc\_norm} & Liên tục & Closeness Centrality trong component, chuẩn hóa Min-Max\\[4pt]
+\texttt{sleep\_room\_ix} & \texttt{sleep\_enc} & Nhị phân & 1 nếu ngủ cùng phòng với index case, 0 nếu không\\[4pt]
+\texttt{cared\_by\_ix} & \texttt{cared\_enc} & Nhị phân & 1 nếu được chăm sóc bởi index case, 0 nếu không\\[4pt]
+\texttt{agegrp9} & \texttt{age\_scaled} & Ordinal & \{$<$5:0, 5--12:1, 13--17:2, 18--34:3, 35--59:4, $\geq$60:5\} chia cho 5 $\rightarrow [0,1]$\\[4pt]
+\texttt{sex} & \texttt{sex\_enc} & Nhị phân & 1 nếu Male, 0 nếu Female\\[4pt]
+\texttt{site} & \texttt{site\_enc} & Nhị phân & 1 nếu Soweto, 0 nếu Klerksdorp\\[4pt]
+\texttt{sus} & \texttt{sus\_enc} & Nhị phân & 1 nếu Susceptible (seroneg. tại baseline), 0 nếu Sero-pos\\[4pt]
+\texttt{index} & \texttt{is\_index} & Nhị phân & 1 nếu là Index case, 0 nếu là Contact\\
+\end{longtable}
+
+\section{Phân phối nhãn và xử lý class imbalance}
+
+Nhãn mục tiêu là \texttt{sars} (Positive/Negative). Phân phối: 241 Positive (70,9\%) và 99 Negative (29,1\%), tỷ lệ mất cân bằng $\approx 2{,}4:1$. Nhóm xử lý bằng \texttt{pos\_weight} trong hàm Binary Cross-Entropy:
+\[
+  \text{pos\_weight} = \frac{N_{\text{neg}}}{N_{\text{pos}}} = \frac{99}{241} \approx 0{,}411.
+\]
+
+Phân chia train/validation/test theo tỷ lệ 70\%/15\%/15\% với chiến lược stratified sampling để bảo toàn tỷ lệ nhãn trong mỗi tập.
+
+
+\chapter{SIÊU THAM SỐ VÀ CẤU HÌNH THỰC NGHIỆM}
+\label{appendix:hyperparams}
+
+\section{Cấu hình mô hình GraphSAGE proxy}
+
+\begin{table}[H]
+\centering
+\caption{Siêu tham số Weighted GraphSAGE proxy}
+\label{tab:hyperparams}
+\begin{tabular}{L{6cm} C{4cm} L{4cm}}
+\toprule
+\textbf{Siêu tham số} & \textbf{Giá trị} & \textbf{Ghi chú}\\
+\midrule
+Số lớp GNN                    & 2         & Conv1 + Conv2\\
+Hidden dimension               & 32        & Hạn chế overfitting\\
+Dropout rate                   & 0,40      & Áp dụng sau Conv1\\
+Hàm kích hoạt                  & ReLU      & Sau mỗi lớp conv\\
+Aggregation method             & Weighted mean & Tích hợp edge weight\\
+Số epoch tối đa                & 500       & Early stopping\\
+Early stopping patience        & 50        & Theo validation AUC\\
+Optimizer                      & Adam      & Standard\\
+Learning rate                  & 0,010     & Constant LR\\
+Weight decay                   & $5 \times 10^{-4}$ & L2 regularization\\
+Loss function                  & BCE with logits & Với pos\_weight\\
+pos\_weight                    & 0,411     & = 99/241\\
+Threshold (validation-tuned)   & 0,24      & Tối ưu trên val set\\
+Random seed                    & 42        & Tất cả thành phần ngẫu nhiên\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Cấu hình mô phỏng SIR}
+
+\begin{table}[H]
+\centering
+\caption{Tham số mô phỏng SIR}
+\label{tab:sir_params}
+\begin{tabular}{L{5.5cm} C{3cm} L{6cm}}
+\toprule
+\textbf{Tham số} & \textbf{Giá trị} & \textbf{Cơ sở lý giải}\\
+\midrule
+Infection rate $\beta$    & 0,25     & Hiệu chỉnh từ hh\_ar $\approx$ 70,9\%, Beta variant\\
+Recovery rate $\gamma$    & 0,10     & $R_0 = \beta/\gamma = 2{,}5$ phù hợp Beta variant\\
+Time horizon $T$          & 30 ngày  & Xấp xỉ thời gian triển khai cảm biến\\
+Monte Carlo runs          & 50       & Đủ ổn định thống kê\\
+Edge probability scaling  & Log-duration & $p_{uv} = \min(\beta \cdot \frac{\ln(1+w_{uv})}{\ln(1+w_{\max})}, 0{,}9)$\\
+Seed node                 & Index case & Một seed per household\\
+Random seed               & 42       & Tái lập kết quả\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Cấu hình chiến lược Random baseline}
+
+Chiến lược Random được chạy 100 lần với seed từ 0 đến 99; kết quả final là trung bình arithmetic của 100 lần. Điều này giúp giảm phương sai do may mắn ngẫu nhiên và cho phép so sánh công bằng với các chiến lược deterministic.
+
+
+\chapter{THỐNG KÊ MÔ TẢ DỮ LIỆU SASHTS}
+\label{appendix:eda}
+
+\section{Phân phối đặc trưng node}
+
+\begin{table}[H]
+\centering
+\caption{Phân phối các thuộc tính nhân khẩu học và dịch tễ học (n=340)}
+\label{tab:node_stats}
+\begin{tabular}{L{4cm} L{3cm} C{2cm} C{2.5cm}}
+\toprule
+\textbf{Thuộc tính} & \textbf{Giá trị} & \textbf{Số lượng} & \textbf{Tỷ lệ (\%)}\\
+\midrule
+\multirow{2}{*}{Site} & Soweto          & 197 & 57,9\\
+                      & Klerksdorp      & 143 & 42,1\\
+\midrule
+\multirow{2}{*}{SARS status} & Positive & 241 & 70,9\\
+                              & Negative &  99 & 29,1\\
+\midrule
+\multirow{2}{*}{Vai trò} & Contact & 252 & 74,1\\
+                         & Index   &  88 & 25,9\\
+\midrule
+\multirow{2}{*}{Giới tính} & Female & -- & --\\
+                            & Male   & -- & --\\
+\midrule
+\multirow{6}{*}{Nhóm tuổi} & $<$5     &  11 &  3,2\\
+                            & 5--12    &  48 & 14,1\\
+                            & 13--17   &  42 & 12,4\\
+                            & 18--34   &  85 & 25,0\\
+                            & 35--59   & 116 & 34,1\\
+                            & $\geq$60 &  38 & 11,2\\
+\midrule
+\multirow{5}{*}{Biến thể virus} & Beta                    & 171 & 50,3\\
+                                & Delta                   &  38 & 11,2\\
+                                & Alpha                   &  13 &  3,8\\
+                                & non-Alpha/Beta/Delta    &  14 &  4,1\\
+                                & Variant Unknown         &  16 &  4,7\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Phân phối cạnh và thời lượng tiếp xúc}
+
+\begin{table}[H]
+\centering
+\caption{Thống kê mô tả thời lượng tiếp xúc (tổng theo cặp, giây)}
+\label{tab:edge_stats}
+\begin{tabular}{L{4cm} R{3cm}}
+\toprule
+\textbf{Thống kê} & \textbf{Giá trị (giây)}\\
+\midrule
+Tổng số cạnh    & 542\\
+Minimum         & 20\\
+Percentile 25\% & 1.320\\
+Median          & 7.860\\
+Mean            & 27.645\\
+Percentile 75\% & 30.940\\
+Maximum         & 111.720\\
+Std.\ dev.      & 38.824\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Phân phối nhãn lây truyền theo cặp tiếp xúc}
+\label{tab:edge_labels}
+\begin{tabular}{L{5cm} C{3cm} C{3cm}}
+\toprule
+\textbf{Nhãn} & \textbf{Số cặp (edges)} & \textbf{Tỷ lệ (\%)}\\
+\midrule
+Transmission (Positive--Positive) & 286 & 52,8\\
+No transmission (Positive--Negative) & 198 & 36,5\\
+Both negative (Negative--Negative) &  58 & 10,7\\
+\midrule
+\textbf{Tổng} & \textbf{542} & \textbf{100,0}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \end{document}
